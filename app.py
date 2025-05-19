@@ -185,28 +185,51 @@ def main():
             else:
                 configure_category(idx)
 
-    def build_category_buttons():
+    last_columns = [9]  # Use a mutable object to track last used columns
+
+    def build_category_buttons(columns=9):
         # Remove old buttons
         for btn in cat_buttons:
             btn.destroy()
         cat_buttons.clear()
-        # Add 9 buttons
+        # Reset all previous column configs (up to max_categories)
         for i in range(max_categories):
+            cat_btn_frame.grid_columnconfigure(i, weight=0)
+        # Configure grid weights for current columns
+        for i in range(columns):
+            cat_btn_frame.grid_columnconfigure(i, weight=1)
+        # Add buttons in a grid with calculated columns
+        for i in range(max_categories):
+            row = i // columns
+            col = i % columns
             if i < len(config["categories"]) and config["categories"][i]["name"] and config["categories"][i]["path"]:
                 btn_text = f"{i+1}: {config['categories'][i]['name']}"
             else:
                 btn_text = f"{i+1}: Select a category"
             btn = tk.Button(cat_btn_frame, text=btn_text, width=18)
-            btn.grid(row=0, column=i, padx=2, pady=2)
+            btn.grid(row=row, column=col, padx=2, pady=2, sticky="nsew")
             btn.bind('<Button-1>', lambda e, idx=i: on_cat_btn(e, idx))
             btn.bind('<Button-3>', lambda e, idx=i: on_cat_btn(e, idx))
             cat_buttons.append(btn)
         # Bind keys 1-9
         for i in range(9):
             root.bind(str(i+1), lambda e, idx=i: assign_category(idx))
+        last_columns[0] = columns
+
+    def on_resize(event=None):
+        min_btn_width = 110
+        # Use root.winfo_width() for more reliable width
+        frame_width = root.winfo_width()
+        columns = max(1, min(max_categories, frame_width // min_btn_width))
+        if columns != last_columns[0]:
+            build_category_buttons(columns)
 
     # Build category buttons on startup
     build_category_buttons()
+    # Bind resize event to reorganize buttons, using after_idle to avoid flicker
+    def schedule_resize(event):
+        root.after_idle(on_resize)
+    root.bind('<Configure>', schedule_resize)
 
     root.mainloop()
 
