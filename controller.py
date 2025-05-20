@@ -60,7 +60,12 @@ class PhotoSorterController:
         img_path = self.images[self.current_index]
         thumb = create_thumbnail(img_path)
         self.view.show_image(thumb)
-        self.view.update_status(f"{img_path.name} ({self.current_index+1}/{len(self.images)})")
+        # Get file size in kilobytes
+        try:
+            file_size_kb = img_path.stat().st_size / 1024
+        except Exception:
+            file_size_kb = None
+        self.view.update_status(f"{img_path.name} ({self.current_index+1}/{len(self.images)})", file_size_kb=file_size_kb)
 
     def next_image(self):
         if self.current_index < len(self.images) - 1:

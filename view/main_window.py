@@ -4,6 +4,7 @@
 
 import tkinter as tk
 from tkinter import filedialog
+import os
 
 class MainWindow(tk.Tk):
     def __init__(self):
@@ -65,12 +66,28 @@ class MainWindow(tk.Tk):
     def show_image(self, photo):
         if photo:
             self.image_label.config(image=photo)
-            self.image_label.image = photo
+            # Attach reference to the label widget's dictionary to prevent garbage collection
+            self.image_label.__dict__['photo_ref'] = photo
         else:
             self.image_label.config(image='')
-            self.image_label.image = None
+            self.image_label.__dict__['photo_ref'] = None
 
-    def update_status(self, text):
+    def update_status(self, text, file_size_kb=None):
+        """
+        Update the status label. If file_size_kb is provided, show it between filename and image counter.
+        """
+        if file_size_kb is not None:
+            # Try to split filename and counter, then insert size
+            import re
+            m = re.match(r'^(.*?)(\s*\(\d+/\d+\))$', text)
+            if m:
+                name = m.group(1).strip()
+                counter = m.group(2)
+                size_str = f" [{file_size_kb:.0f} KB]"
+                text = f"{name}{size_str} {counter}"
+            else:
+                # Fallback: just append
+                text = f"{text} [{file_size_kb:.0f} KB]"
         self.status_label.config(text=text)
         
     def set_categories(self, categories):
