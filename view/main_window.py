@@ -157,3 +157,9 @@ class MainWindow(tk.Tk):
             
             # Schedule rebuild to avoid flickering during resize
             self.after_idle(lambda: self.set_categories(categories))
+            
+    def add_reset_button(self, callback):
+        """Add a reset button to the top right corner and bind it to the callback."""
+        reset_btn = tk.Button(self.main_frame, text='Reset', command=callback)
+        reset_btn.place(relx=1.0, anchor='ne', x=-10, y=10)  # Top right with padding
+        self.reset_btn = reset_btn

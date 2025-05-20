@@ -31,6 +31,9 @@ class PhotoSorterController:
         # Build category buttons
         self.build_category_buttons()
 
+        # Hook reset button to reset_categories_and_source
+        self.view.add_reset_button(self.reset_categories_and_source)
+
         # Show first image if available
         if self.images:
             self.show_current()
@@ -123,6 +126,18 @@ class PhotoSorterController:
         except Exception as e:
             show_error(f"Failed to move file: {e}")    
     
+    def reset_categories_and_source(self):
+        """Reset only categories and last_folder, keep window_size."""
+        self.config["categories"] = []
+        self.config["last_folder"] = ""
+        save_config(self.config)
+        self.current_folder = None
+        self.images = []
+        self.current_index = 0
+        self.build_category_buttons()
+        self.view.show_image(None)
+        self.view.update_status("Select a source folder.")
+
     def on_close(self):
         """Handle window close event by saving window size and then closing the application."""
         # Get current window size
