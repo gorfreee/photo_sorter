@@ -17,8 +17,13 @@ class PhotoSorterController:
         self.images = list_images(self.current_folder) if self.current_folder and self.current_folder.exists() else []
         self.current_index = 0
 
-        # Initialize view and bind callbacks
+        # Initialize view, set window size from config, and bind close event
         self.view = MainWindow()
+        # Apply saved window size
+        width, height = self.config.get("window_size", [800, 600])
+        self.view.geometry(f"{width}x{height}")
+        # Save window size on close
+        self.view.protocol("WM_DELETE_WINDOW", self.on_close)
         self.view.on_select_folder(self.select_folder)
         self.view.on_next(self.next_image)
         self.view.on_prev(self.prev_image)
@@ -116,4 +121,15 @@ class PhotoSorterController:
                 show_info("All photos have been sorted.")
                 self.view.quit()
         except Exception as e:
-            show_error(f"Failed to move file: {e}")    # The resize handling is now done directly in the MainWindow class
+            show_error(f"Failed to move file: {e}")    
+    
+    def on_close(self):
+        """Handle window close event by saving window size and then closing the application."""
+        # Get current window size
+        width = self.view.winfo_width()
+        height = self.view.winfo_height()
+        # Save to config
+        self.config["window_size"] = [width, height]
+        save_config(self.config)
+        # Destroy the window
+        self.view.destroy()

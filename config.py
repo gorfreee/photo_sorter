@@ -15,7 +15,8 @@ def load_config() -> dict:
     if CONFIG_PATH.exists():
         with open(CONFIG_PATH, 'r') as f:
             return json.load(f)
-    return {"categories": [], "last_folder": ""}
+    # Provide default structure including window size
+    return {"categories": [], "last_folder": "", "window_size": [800, 600]}
 
 
 def save_config(cfg: dict) -> None:
