@@ -117,14 +117,15 @@ class MainWindow(tk.Tk):
             else:
                 btn_text = f'{i+1}: Select a category'
                 
-            btn = tk.Button(self.cat_btn_frame, text=btn_text, width=18)
+            # Set a fixed height (in text lines) and prevent vertical stretching
+            btn = tk.Button(self.cat_btn_frame, text=btn_text, width=18, height=2)
             btn.grid(row=row, column=col, padx=5, pady=5, sticky='nsew')
             self.cat_buttons.append(btn)
             
-        # Configure row weights for responsive layout
+        # Configure row weights for responsive layout, but set to 0 to avoid vertical stretching
         rows_needed = (9 + columns - 1) // columns  # Ceiling division
         for r in range(rows_needed):
-            self.cat_btn_frame.grid_rowconfigure(r, weight=1)
+            self.cat_btn_frame.grid_rowconfigure(r, weight=0)
             
     def _on_window_resize(self, event):
         """Handle window resize events to adjust button layout"""

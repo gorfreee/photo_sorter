@@ -17,12 +17,16 @@ class PhotoSorterController:
         self.images = list_images(self.current_folder) if self.current_folder and self.current_folder.exists() else []
         self.current_index = 0
 
-        # Initialize view, set window size from config, and bind close event
+        # Initialize view, set window size and position from config, and bind close event
         self.view = MainWindow()
-        # Apply saved window size
+        # Apply saved window size and position
         width, height = self.config.get("window_size", [800, 600])
-        self.view.geometry(f"{width}x{height}")
-        # Save window size on close
+        x, y = self.config.get("window_position", [None, None])
+        if x is not None and y is not None:
+            self.view.geometry(f"{width}x{height}+{x}+{y}")
+        else:
+            self.view.geometry(f"{width}x{height}")
+        # Save window size and position on close
         self.view.protocol("WM_DELETE_WINDOW", self.on_close)
         self.view.on_select_folder(self.select_folder)
         self.view.on_next(self.next_image)
@@ -139,12 +143,15 @@ class PhotoSorterController:
         self.view.update_status("Select a source folder.")
 
     def on_close(self):
-        """Handle window close event by saving window size and then closing the application."""
-        # Get current window size
+        """Handle window close event by saving window size and position, then closing the application."""
+        # Get current window size and position
         width = self.view.winfo_width()
         height = self.view.winfo_height()
+        x = self.view.winfo_x()
+        y = self.view.winfo_y()
         # Save to config
         self.config["window_size"] = [width, height]
+        self.config["window_position"] = [x, y]
         save_config(self.config)
         # Destroy the window
         self.view.destroy()
