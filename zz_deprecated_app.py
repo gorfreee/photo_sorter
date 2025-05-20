@@ -1,7 +1,14 @@
+# zz_deprecated_app.py
+# Legacy/old version of the app, kept for reference or backup purposes.
+# This file is not used by the current application but may contain useful code or ideas from earlier versions.
+
 """
 Photo Sorter App
 A lightweight desktop app to sort photos into folders.
 Uses Tkinter for the UI (no extra dependencies required).
+
+Deprecated: entry point moved to __main__.py
+This file is kept for reference and is no longer used by the application.
 """
 
 import os
