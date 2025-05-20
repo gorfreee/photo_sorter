@@ -11,7 +11,7 @@ def list_images(folder: Path) -> list[Path]:
     """
     Return a sorted list of image file paths in the given folder.
     """
-    supported = ('.jpg', '.jpeg', '.png', '.bmp', '.gif')
+    supported = ('.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tif', '.tiff', '.webp')
     return sorted([folder / f for f in os.listdir(folder)
                    if f.lower().endswith(supported)])
 

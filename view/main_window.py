@@ -95,6 +95,11 @@ class MainWindow(tk.Tk):
         # Bind keys 1-9 for category assignment
         for i in range(9):
             self.bind(str(i+1), lambda e, idx=i: self.category_click_callback(idx) if self.category_click_callback else None)
+        # Bind Left/Right Arrow keys for image navigation
+        # Left Arrow triggers Previous button action
+        self.bind('<Left>', lambda e: self.prev_btn.invoke())  # Clear, direct binding
+        # Right Arrow triggers Next button action
+        self.bind('<Right>', lambda e: self.next_btn.invoke())  # Clear, direct binding
             
     def _rebuild_category_grid(self, categories, columns):
         """Rebuild the category grid with the specified number of columns"""
