@@ -101,9 +101,21 @@ class MainWindow(tk.Tk):
 
     def bind_category(self, idx, on_click, on_right_click):
         btn = self.cat_buttons[idx]
-        btn.bind('<Button-1>', lambda e: on_click(idx))
-        btn.bind('<Button-3>', lambda e: on_right_click(idx))
-        
+        # ---
+        # Fix: Ensure button relief is always reset after dialog closes, even if cancelled.
+        # This prevents the button from staying visually 'pressed' (sunken) if the dialog steals focus.
+        def handle_click(event=None, which='left'):
+            btn.config(relief='sunken')  # Visually press the button
+            try:
+                if which == 'left':
+                    on_click(idx)
+                else:
+                    on_right_click(idx)
+            finally:
+                # Always reset relief after the dialog closes (after idle to ensure dialog is gone)
+                btn.after_idle(lambda: btn.config(relief='raised'))
+        btn.bind('<Button-1>', lambda e: handle_click(e, 'left'))
+        btn.bind('<Button-3>', lambda e: handle_click(e, 'right'))
         # Store callbacks for keyboard bindings
         self.category_click_callback = on_click
         self.category_right_callback = on_right_click
