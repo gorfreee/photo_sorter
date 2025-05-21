@@ -5,7 +5,7 @@
 from pathlib import Path
 import os
 import shutil
-from PIL import Image, ImageTk
+from PIL import Image  # Only import Image, not ImageTk
 
 def list_images(folder: Path) -> list[Path]:
     """
@@ -23,10 +23,11 @@ def move_image(src: Path, dest_folder: Path) -> None:
     dest_folder.mkdir(parents=True, exist_ok=True)
     shutil.move(str(src), str(dest_folder))
 
-def create_thumbnail(image_path: Path, size=(600, 400)) -> ImageTk.PhotoImage:
+def create_thumbnail(image_path: Path, size=(600, 400)) -> Image.Image:
     """
-    Create a thumbnail for the given image path and return a PhotoImage.
+    Create a thumbnail for the given image path and return a PIL Image object.
+    The model layer should not depend on any UI or Tkinter-specific modules.
     """
     img = Image.open(image_path)
     img.thumbnail(size)
-    return ImageTk.PhotoImage(img)
+    return img  # Return the PIL Image object

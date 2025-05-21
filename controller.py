@@ -5,6 +5,7 @@
 from pathlib import Path
 from config import load_config, save_config
 from model import list_images, move_image, create_thumbnail
+from PIL import ImageTk  # Import ImageTk here for UI conversion
 from view.main_window import MainWindow
 from view.dialogs import configure_category, show_info, show_error
 
@@ -58,7 +59,9 @@ class PhotoSorterController:
             self.view.update_status("No images found.")
             return
         img_path = self.images[self.current_index]
-        thumb = create_thumbnail(img_path)
+        pil_thumb = create_thumbnail(img_path)
+        # Convert PIL Image to ImageTk.PhotoImage for display in the UI
+        thumb = ImageTk.PhotoImage(pil_thumb)
         self.view.show_image(thumb)
         # Get file size in kilobytes
         try:
