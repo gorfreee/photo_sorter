@@ -1,16 +1,19 @@
-# __main__.py
-# Entry point for the Photo Sorter application.
-# This file initializes the main controller and starts the Tkinter main loop.
-# It exists to provide a clean, single entry for running the app as a script or module.
+"""
+Photo Sorter Application Entry Point
 
-# --- Imports ---
+This file serves as the main entry point for the Photo Sorter application.
+Its primary purpose is to initialize the main controller, which sets up the application's logic and user interface, and then start the Tkinter main loop.
+By centralizing the startup logic here, the application can be run both as a script and as a module, ensuring a single, clear entry for launching the app.
+"""
+
+# Import the main controller responsible for application logic and UI setup.
 from controller import PhotoSorterController
 
-# --- Main Application Entry Point ---
+# Define the main function that initializes the controller and starts the GUI event loop.
 def main():
     app = PhotoSorterController()
     app.view.mainloop()
 
-# --- Script Execution Guard ---
+# Ensure the application starts only when this file is executed directly.
 if __name__ == "__main__":
     main()
