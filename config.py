@@ -18,11 +18,14 @@ CONFIG_PATH = Path.home() / ".photosorter_config.json"
 
 # --- Configuration Load Function ---
 # Loads configuration from the JSON file if it exists, otherwise returns default settings.
+# Ensures 'ui_backend' is set to 'tkinter' by default for future UI backend selection.
 def load_config() -> dict:
     if CONFIG_PATH.exists():
         with open(CONFIG_PATH, 'r') as f:
-            return json.load(f)
-    return {"categories": [], "last_folder": "", "window_size": [800, 600]}
+            cfg = json.load(f)
+        cfg.setdefault("ui_backend", "tkinter")
+        return cfg
+    return {"categories": [], "last_folder": "", "window_size": [800, 600], "ui_backend": "tkinter"}
 
 # --- Configuration Save Function ---
 # Saves the provided configuration dictionary to the JSON file, creating it if necessary.

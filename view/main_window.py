@@ -5,8 +5,9 @@
 import tkinter as tk
 from tkinter import filedialog
 import os
+from view.base_view import BaseView
 
-class MainWindow(tk.Tk):
+class MainWindow(tk.Tk, BaseView):
     def __init__(self):
         super().__init__()
         self.title('Photo Sorter')
@@ -50,6 +51,41 @@ class MainWindow(tk.Tk):
         
         # Bind window resize event
         self.bind('<Configure>', self._on_window_resize)
+
+    # Implementation of BaseView abstract methods to allow pluggable UI
+    def geometry(self, new_geometry=None) -> str:
+        """Set or get window geometry. Returns geometry string."""
+        if new_geometry is None:
+            return tk.Tk.geometry(self)
+        return tk.Tk.geometry(self, new_geometry)
+
+    def protocol(self, protocol_name, callback=None) -> None:
+        """Register a protocol handler (e.g., WM_DELETE_WINDOW)."""
+        tk.Tk.protocol(self, protocol_name, callback)
+
+    def destroy(self):
+        """Destroy the window."""
+        return tk.Tk.destroy(self)
+
+    def quit(self):
+        """Quit the application mainloop."""
+        return tk.Tk.quit(self)
+
+    def winfo_width(self):
+        """Get window width."""
+        return tk.Tk.winfo_width(self)
+
+    def winfo_height(self):
+        """Get window height."""
+        return tk.Tk.winfo_height(self)
+
+    def winfo_x(self):
+        """Get window X position."""
+        return tk.Tk.winfo_x(self)
+
+    def winfo_y(self):
+        """Get window Y position."""
+        return tk.Tk.winfo_y(self)
 
     def on_next(self, callback):
         self.next_btn.config(command=callback)
@@ -198,3 +234,7 @@ class MainWindow(tk.Tk):
         reset_btn = tk.Button(self.main_frame, text='Reset', command=callback)
         reset_btn.place(relx=1.0, anchor='ne', x=-10, y=10)  # Top right with padding
         self.reset_btn = reset_btn
+
+    def mainloop(self, n=0, **kwargs):
+        """Start the Tkinter main event loop."""
+        tk.Tk.mainloop(self, n, **kwargs)

@@ -6,7 +6,8 @@ from pathlib import Path
 from config import load_config, save_config
 from model import list_images, move_image, create_thumbnail
 from PIL import ImageTk  # Import ImageTk here for UI conversion
-from view.main_window import MainWindow
+from view.factory import create_view
+from view.main_window import MainWindow  # fallback
 from view.dialogs import configure_category, show_info, show_error
 
 class PhotoSorterController:
@@ -19,7 +20,10 @@ class PhotoSorterController:
         self.current_index = 0
 
         # Initialize view, set window size and position from config, and bind close event
-        self.view = MainWindow()
+        # Instantiate view using factory for pluggable UI backends
+        self.view = create_view(self.config)
+        # TODO: In the future, replace MainWindow with BaseView implementation (e.g., DearPyGuiView)
+        # self.view = create_view()  # Factory to choose view by configuration
         # Apply saved window size and position
         width, height = self.config.get("window_size", [800, 600])
         x, y = self.config.get("window_position", [None, None])
@@ -103,6 +107,7 @@ class PhotoSorterController:
     def edit_category(self, idx):
         categories = self.config.get("categories", [])
         initial = categories[idx] if idx < len(categories) else {"name": "", "path": ""}
+        # Pass the BaseView instance to dialog, compatible with Tkinter and future UIs
         result = configure_category(self.view, idx, initial)
         if result.get("action") == "save":
             while len(categories) <= idx:

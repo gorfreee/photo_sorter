@@ -18,7 +18,7 @@ def show_error(message: str) -> None:
     messagebox.showerror("Error", message)
 
 
-def configure_category(root: tk.Tk, idx: int, initial: dict) -> dict:
+def configure_category(root, idx: int, initial: dict) -> dict:
     """
     Show a dialog to configure category name and path.
     Returns a dict with action: 'save', 'delete', or 'cancel', and data for saving.
