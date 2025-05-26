@@ -5,10 +5,9 @@
 from pathlib import Path
 from config import load_config, save_config
 from model import list_images, move_image, create_thumbnail
-from PIL import ImageTk  # Import ImageTk here for UI conversion
 from view.factory import create_view
-from view.main_window import MainWindow  # fallback
 from view.dialogs import configure_category, show_info, show_error
+from typing import Callable
 
 class PhotoSorterController:
     def __init__(self):
@@ -64,9 +63,8 @@ class PhotoSorterController:
             return
         img_path = self.images[self.current_index]
         pil_thumb = create_thumbnail(img_path)
-        # Convert PIL Image to ImageTk.PhotoImage for display in the UI
-        thumb = ImageTk.PhotoImage(pil_thumb)
-        self.view.show_image(thumb)
+        # Pass PIL Image directly to the view (DearPyGui handles PIL images)
+        self.view.show_image(pil_thumb)
         # Get file size in kilobytes
         try:
             file_size_kb = img_path.stat().st_size / 1024
@@ -107,21 +105,23 @@ class PhotoSorterController:
     def edit_category(self, idx):
         categories = self.config.get("categories", [])
         initial = categories[idx] if idx < len(categories) else {"name": "", "path": ""}
-        # Pass the BaseView instance to dialog, compatible with Tkinter and future UIs
-        result = configure_category(self.view, idx, initial)
-        if result.get("action") == "save":
-            while len(categories) <= idx:
-                categories.append({"name": "", "path": ""})
-            categories[idx] = {"name": result["name"], "path": result["path"]}
-            self.config["categories"] = categories
-            save_config(self.config)
-            self.build_category_buttons()
-        elif result.get("action") == "delete":
-            if idx < len(categories):
-                categories[idx] = {"name": "", "path": ""}
+        # Use callback-based dialog for DearPyGui
+        def on_dialog_result(result):
+            if result.get("action") == "save":
+                while len(categories) <= idx:
+                    categories.append({"name": "", "path": ""})
+                categories[idx] = {"name": result["name"], "path": result["path"]}
                 self.config["categories"] = categories
                 save_config(self.config)
                 self.build_category_buttons()
+            elif result.get("action") == "delete":
+                if idx < len(categories):
+                    categories[idx] = {"name": "", "path": ""}
+                    self.config["categories"] = categories
+                    save_config(self.config)
+                    self.build_category_buttons()
+            # No action needed for cancel
+        configure_category(self.view, idx, initial, on_dialog_result)
 
     def assign_category(self, idx):
         if not self.images:

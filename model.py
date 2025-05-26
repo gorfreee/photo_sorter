@@ -26,7 +26,7 @@ def move_image(src: Path, dest_folder: Path) -> None:
 def create_thumbnail(image_path: Path, size=(600, 400)) -> Image.Image:
     """
     Create a thumbnail for the given image path and return a PIL Image object.
-    The model layer should not depend on any UI or Tkinter-specific modules.
+    The model layer should not depend on any UI-specific modules.
     """
     img = Image.open(image_path)
     img.thumbnail(size)

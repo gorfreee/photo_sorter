@@ -1,35 +1,36 @@
 """
 Defines the abstract interface for all view implementations.
-This allows swapping out the Tkinter-based UI for Dear PyGui or others
+This allows swapping out the UI backend (e.g., Dear PyGui or others)
 without changing controller logic.
 """
 from abc import ABC, abstractmethod
+from typing import Optional, Union, Callable
 
 class BaseView(ABC):
     @abstractmethod
-    def geometry(self, new_geometry=None) -> str:
+    def geometry(self, new_geometry: Optional[str] = None) -> str:
         """Set or get window geometry. Returns geometry string."""
         pass
 
     @abstractmethod
-    def protocol(self, protocol_name, callback=None) -> None:
+    def protocol(self, protocol_name: str, callback: Optional[Callable] = None) -> None:
         """Register protocol handler."""
         pass
 
     @abstractmethod
-    def on_select_folder(self, callback):
+    def on_select_folder(self, callback: Callable) -> None:
         pass
 
     @abstractmethod
-    def on_next(self, callback):
+    def on_next(self, callback: Callable) -> None:
         pass
 
     @abstractmethod
-    def on_prev(self, callback):
+    def on_prev(self, callback: Callable) -> None:
         pass
 
     @abstractmethod
-    def add_reset_button(self, callback):
+    def add_reset_button(self, callback: Callable) -> None:
         pass
 
     @abstractmethod
@@ -37,27 +38,27 @@ class BaseView(ABC):
         pass
 
     @abstractmethod
-    def show_image(self, photo):
+    def show_image(self, photo) -> None:
         pass
 
     @abstractmethod
-    def update_status(self, text: str, file_size_kb=None):
+    def update_status(self, text: str, file_size_kb: Optional[float] = None) -> None:
         pass
 
     @abstractmethod
-    def set_categories(self, categories):
+    def set_categories(self, categories: list) -> None:
         pass
 
     @abstractmethod
-    def bind_category(self, idx, on_click, on_right_click):
+    def bind_category(self, idx: int, on_click: Callable[[int], None], on_right_click: Callable[[int], None]) -> None:
         pass
 
     @abstractmethod
-    def bind_keyboard_shortcuts(self):
+    def bind_keyboard_shortcuts(self) -> None:
         pass
 
     @abstractmethod
-    def destroy(self):
+    def destroy(self) -> None:
         pass
 
     @abstractmethod
@@ -82,6 +83,6 @@ class BaseView(ABC):
         pass
 
     @abstractmethod
-    def mainloop(self, n=0, **kwargs):
+    def mainloop(self, n: int = 0, **kwargs) -> None:
         """Start the main event loop for the UI."""
         pass

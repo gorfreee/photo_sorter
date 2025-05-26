@@ -2,69 +2,81 @@
 # Contains dialog functions for showing info, warning, error messages, and category configuration dialogs.
 # This file keeps UI dialog logic modular and reusable within the view layer.
 
+import dearpygui.dearpygui as dpg
+from typing import Dict, Any, Callable
+# Add tkinter import for native folder dialog
 import tkinter as tk
-from tkinter import messagebox, simpledialog, filedialog
+from tkinter import filedialog
+
+
+def _show_message_dialog(title: str, message: str, width: int = 300, height: int = 100) -> None:
+    """Helper function to show a modal dialog with a message and OK button."""
+    window_id = dpg.generate_uuid()
+
+    def _close_dialog():
+        if dpg.does_item_exist(window_id):
+            dpg.delete_item(window_id)
+
+    with dpg.window(label=title, modal=True, show=True, width=width, height=height, tag=window_id):
+        dpg.add_text(message)
+        dpg.add_button(label="OK", callback=_close_dialog)
 
 
 def show_info(message: str) -> None:
-    messagebox.showinfo("Info", message)
+    """Show an information dialog with the given message."""
+    _show_message_dialog("Info", message)
 
 
 def show_warning(message: str) -> None:
-    messagebox.showwarning("Warning", message)
+    """Show a warning dialog with the given message."""
+    _show_message_dialog("Warning", message)
 
 
 def show_error(message: str) -> None:
-    messagebox.showerror("Error", message)
+    """Show an error dialog with the given message."""
+    _show_message_dialog("Error", message)
 
 
-def configure_category(root, idx: int, initial: dict) -> dict:
+def configure_category(root: Any, idx: int, initial: Dict[str, str], callback: Callable) -> None:
     """
     Show a dialog to configure category name and path.
-    Returns a dict with action: 'save', 'delete', or 'cancel', and data for saving.
+    Calls the callback with a dict: {'action': 'save'|'delete'|'cancel', ...data}
     """
-    result = {'action': 'cancel'}
+    name_value = initial.get('name', '')
+    path_value = initial.get('path', '')
+    window_id = dpg.generate_uuid()
 
-    dialog = tk.Toplevel(root)
-    dialog.title(f"Edit Category {idx+1}")
-    dialog.grab_set()
+    def save_callback():
+        result = {
+            'action': 'save',
+            'name': dpg.get_value(f"cat_name_{window_id}"),
+            'path': dpg.get_value(f"cat_path_{window_id}")
+        }
+        dpg.delete_item(window_id)
+        callback(result)
 
-    tk.Label(dialog, text=f"Category {idx+1} Name:").pack(padx=10, pady=5)
-    name_var = tk.StringVar(value=initial.get('name', ''))
-    path_var = tk.StringVar(value=initial.get('path', ''))
+    def delete_callback():
+        result = {'action': 'delete'}
+        dpg.delete_item(window_id)
+        callback(result)
 
-    tk.Entry(dialog, textvariable=name_var, width=20).pack(padx=10, pady=2)
-    tk.Label(dialog, text="Destination Folder:").pack(padx=10, pady=5)
-    path_frame = tk.Frame(dialog)
-    path_frame.pack(padx=10, pady=2)
-    tk.Entry(path_frame, textvariable=path_var, width=30).pack(side=tk.LEFT)
-    tk.Button(path_frame, text="Browse", command=lambda: path_var.set(filedialog.askdirectory())).pack(side=tk.LEFT, padx=5)
+    def cancel_callback():
+        dpg.delete_item(window_id)
+        callback({'action': 'cancel'})
 
-    btn_frame = tk.Frame(dialog)
-    btn_frame.pack(pady=10)
+    def browse_callback():
+        # Use native Windows folder selection dialog
+        root = tk.Tk()
+        root.withdraw()  # Hide the main window
+        folder_selected = filedialog.askdirectory(title="Select Destination Folder")
+        root.destroy()
+        if folder_selected:
+            dpg.set_value(f"cat_path_{window_id}", folder_selected)
 
-    def on_save():
-        name = name_var.get().strip()
-        path = path_var.get().strip()
-        if not name or not path:
-            show_warning("Please enter both a name and a folder.")
-            return
-        result['action'] = 'save'
-        result['name'] = name
-        result['path'] = path
-        dialog.destroy()
-
-    def on_delete():
-        result['action'] = 'delete'
-        dialog.destroy()
-
-    def on_cancel():
-        result['action'] = 'cancel'
-        dialog.destroy()
-
-    tk.Button(btn_frame, text="Save", command=on_save).pack(side=tk.LEFT, padx=5)
-    tk.Button(btn_frame, text="Delete", command=on_delete).pack(side=tk.LEFT, padx=5)
-    tk.Button(btn_frame, text="Cancel", command=on_cancel).pack(side=tk.LEFT, padx=5)
-
-    root.wait_window(dialog)
-    return result
+    with dpg.window(label=f"Edit Category {idx+1}", modal=True, tag=window_id, width=400, height=200):
+        dpg.add_input_text(label="Category Name", default_value=name_value, tag=f"cat_name_{window_id}")
+        dpg.add_input_text(label="Destination Folder", default_value=path_value, tag=f"cat_path_{window_id}")
+        dpg.add_button(label="Browse", callback=browse_callback)
+        dpg.add_button(label="Save", callback=save_callback)
+        dpg.add_button(label="Delete", callback=delete_callback)
+        dpg.add_button(label="Cancel", callback=cancel_callback)

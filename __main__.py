@@ -2,7 +2,7 @@
 Photo Sorter Application Entry Point
 
 This file serves as the main entry point for the Photo Sorter application.
-Its primary purpose is to initialize the main controller, which sets up the application's logic and user interface, and then start the Tkinter main loop.
+Its primary purpose is to initialize the main controller, which sets up the application's logic and user interface, and then start the main event loop.
 By centralizing the startup logic here, the application can be run both as a script and as a module, ensuring a single, clear entry for launching the app.
 """
 

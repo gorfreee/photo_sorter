@@ -1,89 +1,259 @@
-"""
-Stub implementation for DearPyGui-based UI, to be implemented later.
-Implements the BaseView interface for future UI backend swapping.
-"""
-from view.base_view import BaseView
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Uncomment below after installing DearPyGui
-# import dearpygui.dearpygui as dpg
+"""
+DearPyGui implementation of the photo sorter UI.
+Implements the BaseView interface for UI backend swapping.
+"""
+from pathlib import Path
+import dearpygui.dearpygui as dpg
+from view.base_view import BaseView
+import numpy as np
+from PIL import Image
+from typing import Optional, Callable, Union, Any, Dict, List
 
 class DearPyGuiView(BaseView):
     def __init__(self):
-        # TODO: Initialize DearPyGui context and create main window
-        pass
+        # Initialize DPG context
+        dpg.create_context()
+        
+        # Initialize window size and position
+        self.width = 800
+        self.height = 600
+        self.x = 100
+        self.y = 100
+        
+        # Create texture registry first
+        with dpg.texture_registry() as self.texture_registry:
+            # Create a 1x1 transparent texture as a placeholder
+            self.placeholder_texture_tag = "placeholder_texture"
+            dpg.add_raw_texture(
+                width=1,
+                height=1,
+                default_value=[0.0, 0.0, 0.0],
+                format=dpg.mvFormat_Float_rgb,
+                tag=self.placeholder_texture_tag
+            )
+            # Create a main image texture (will be resized as needed)
+            self.image_texture_tag = "image_texture"
+            dpg.add_raw_texture(
+                width=1,
+                height=1,
+                default_value=[0.0, 0.0, 0.0],
+                format=dpg.mvFormat_Float_rgb,
+                tag=self.image_texture_tag
+            )
+        
+        # Create viewport and window
+        dpg.create_viewport(title="Photo Sorter", width=self.width, height=self.height, x_pos=self.x, y_pos=self.y)
+        dpg.setup_dearpygui()
+        
+        with dpg.window(label="Main Window", tag="main_window", no_close=True):
+            # Create image display area
+            dpg.add_group(horizontal=True, tag="top_controls")
+            dpg.add_button(label="Select Folder", callback=self._on_select_folder, parent="top_controls")
+            dpg.add_button(label="Reset", tag="reset_button", parent="top_controls")
+            
+            # Status text
+            dpg.add_text("Select a source folder", tag="status_text")
+            
+            # Image display group
+            with dpg.group(horizontal=True):
+                dpg.add_button(label="<", callback=self._on_prev)
+                dpg.add_image(texture_tag=self.image_texture_tag, tag="image_display", width=400, height=300)
+                dpg.add_button(label=">", callback=self._on_next)
+            
+            # Category buttons container
+            dpg.add_group(tag="categories_container")
+        
+        # Callbacks dictionary
+        self._callbacks: Dict[str, Callable] = {}
+        self._category_callbacks: Dict[int, Dict[str, Callable]] = {}
+        self._folder_path: Optional[str] = None
+        
+        # Event handlers
+        self._exit_handler: Optional[Callable] = None
+        
+        # Initial handler setups
+        dpg.set_viewport_resize_callback(self._on_viewport_resize)
+        
+        # Start DPG
+        dpg.show_viewport()
 
-    def geometry(self, dimensions: str) -> None:
-        # TODO: Map window size and position
-        pass
+    def _on_select_folder(self) -> None:
+        """Internal handler for select folder button."""
+        if self._callbacks.get("select_folder"):
+            self._callbacks["select_folder"]()
 
-    def protocol(self, protocol_name: str, callback) -> None:
-        # TODO: Handle close protocol or ignore if not supported
-        pass
+    def _on_next(self) -> None:
+        """Internal handler for next button."""
+        if self._callbacks.get("next"):
+            self._callbacks["next"]()
 
-    def on_select_folder(self, callback):
-        # TODO: Implement folder selection dialog in DearPyGui
-        pass
+    def _on_prev(self) -> None:
+        """Internal handler for previous button."""
+        if self._callbacks.get("prev"):
+            self._callbacks["prev"]()
 
-    def on_next(self, callback):
-        # TODO: Bind "Next" button or key to callback
-        pass
+    def geometry(self, new_geometry: Optional[str] = None) -> str:
+        if new_geometry:
+            # Parse geometry string (format: "widthxheight+x+y")
+            parts = new_geometry.replace("+", "x+").split("+")
+            size = parts[0].split("x")
+            self.width, self.height = map(int, size)
+            if len(parts) > 1:
+                self.x, self.y = map(int, parts[1:])
+            dpg.set_viewport_pos([self.x, self.y])
+            dpg.set_viewport_width(self.width)
+            dpg.set_viewport_height(self.height)
+            # Update main window size
+            dpg.configure_item("main_window", width=self.width, height=self.height)
+        return f"{self.width}x{self.height}+{self.x}+{self.y}"
 
-    def on_prev(self, callback):
-        # TODO: Bind "Previous" button or key to callback
-        pass
+    def protocol(self, protocol_name: str, callback: Optional[Callable] = None) -> None:
+        if protocol_name == "WM_DELETE_WINDOW" and callback:
+            self._callbacks["close"] = callback
 
-    def add_reset_button(self, callback):
-        # TODO: Add a reset button to UI and bind to callback
-        pass
+    def on_select_folder(self, callback: Callable) -> None:
+        self._callbacks["select_folder"] = callback
+
+    def on_next(self, callback: Callable) -> None:
+        self._callbacks["next"] = callback
+
+    def on_prev(self, callback: Callable) -> None:
+        self._callbacks["prev"] = callback
+
+    def add_reset_button(self, callback: Callable) -> None:
+        self._callbacks["reset"] = callback
+        dpg.set_item_callback("reset_button", self._on_reset)
+
+    def _on_reset(self) -> None:
+        if self._callbacks.get("reset"):
+            self._callbacks["reset"]()
 
     def ask_for_folder(self) -> str:
-        # TODO: Open folder dialog and return selected path
-        return ""
+        # Use native Windows folder selection dialog via tkinter
+        import tkinter as tk
+        from tkinter import filedialog
+        root = tk.Tk()
+        root.withdraw()  # Hide the main window
+        folder_selected = filedialog.askdirectory(title="Select Source Folder")
+        root.destroy()
+        return folder_selected or ""
 
-    def show_image(self, photo):
-        # TODO: Render image thumbnail in DearPyGui
-        pass
+    def show_image(self, photo: Optional[Image.Image]) -> None:
+        """Display the given PIL image in the DearPyGui window."""
+        if photo is None:
+            if dpg.does_item_exist("image_display"):
+                dpg.configure_item("image_display", texture_tag=self.placeholder_texture_tag, width=400, height=300)
+            # Reset the image texture to 1x1 transparent
+            if dpg.does_item_exist(self.image_texture_tag):
+                dpg.set_value(self.image_texture_tag, [0.0, 0.0, 0.0])
+                dpg.configure_item(self.image_texture_tag, width=1, height=1)
+            return
 
-    def update_status(self, text: str, file_size_kb=None):
-        # TODO: Display status text in UI
-        pass
+        # Always convert to RGB
+        if photo.mode != "RGB":
+            photo = photo.convert("RGB")
+        img_array = np.asarray(photo).astype(np.float32) / 255.0
+        if img_array.ndim == 2:
+            img_array = np.stack([img_array] * 3, axis=-1)
+        if img_array.shape[2] > 3:
+            img_array = img_array[:, :, :3]
+        height, width = img_array.shape[:2]
+        img_list = img_array.flatten().tolist()
 
-    def set_categories(self, categories):
-        # TODO: Create category buttons or list
-        pass
-
-    def bind_category(self, idx, on_click, on_right_click):
-        # TODO: Bind category selection events
-        pass
-
-    def bind_keyboard_shortcuts(self):
-        # TODO: Bind key shortcuts (1-9, arrows)
-        pass
-
-    def bind(self, sequence: str, func=None, add=None) -> None:
-        # TODO: Map event binding if supported
-        pass
-
-    def destroy(self):
-        # TODO: Clean up DearPyGui context
-        pass
-
+        # Update the existing texture with new image data and size
+        dpg.set_value(self.image_texture_tag, img_list)
+        dpg.configure_item(self.image_texture_tag, width=width, height=height)
+        dpg.configure_item("image_display", texture_tag=self.image_texture_tag, width=width, height=height)
+        dpg.set_item_label("image_display", f"{width}x{height}")  # Optional: show size for debug
+    
+    def destroy(self) -> None:
+        """Clean up DPG resources and close the window."""
+        if self._callbacks.get("close"):
+            self._callbacks["close"]()
+        dpg.destroy_context()
+    
+    def mainloop(self, n: int = 0, **kwargs) -> None: # Added n and **kwargs to match base
+        """Start the Dear PyGui main loop."""
+        dpg.start_dearpygui()
+    
     def quit(self) -> None:
-        # TODO: Stop DearPyGui main loop and exit
-        pass
-
+        """Exit the application."""
+        dpg.stop_dearpygui()
+        self.destroy()
+    
     def winfo_width(self) -> int:
-        # TODO: Return current window width
-        return 0
-
+        """Get current window width."""
+        return int(dpg.get_viewport_width())
+    
     def winfo_height(self) -> int:
-        # TODO: Return current window height
-        return 0
-
+        """Get current window height."""
+        return int(dpg.get_viewport_height())
+    
     def winfo_x(self) -> int:
-        # TODO: Return window X position
-        return 0
-
+        """Get current window x position."""
+        return int(dpg.get_viewport_pos()[0])
+    
     def winfo_y(self) -> int:
-        # TODO: Return window Y position
-        return 0
+        """Get current window y position."""
+        return int(dpg.get_viewport_pos()[1])
+    
+    def update_status(self, text: str, file_size_kb: Optional[float] = None) -> None:
+        """Update the status text."""
+        status = text
+        if file_size_kb is not None:
+            status += f" ({file_size_kb:.1f} KB)"
+        dpg.set_value("status_text", status)
+    
+    def set_categories(self, categories: List[Dict[str, str]]) -> None:
+        """Set up category buttons."""
+        if dpg.does_item_exist("categories_container"):
+            dpg.delete_item("categories_container", children_only=True)
+            
+        for idx in range(9):
+            cat = categories[idx] if idx < len(categories) else {"name": "", "path": ""}
+            name = cat.get("name", "")
+            button_text = f"{idx + 1}: {name}" if name else f"{idx + 1}: [Empty]"
+            
+            with dpg.group(parent="categories_container", horizontal=True):
+                dpg.add_button(
+                    label=button_text,
+                    callback=lambda s, a, u: self._on_category_click(u),
+                    user_data=idx,
+                    width=200
+                )
+    
+    def bind_category(self, idx: int, on_click: Callable[[int], None], on_right_click: Callable[[int], None]) -> None:
+        """Bind category button callbacks."""
+        self._category_callbacks[idx] = {
+            "click": on_click,
+            "right": on_right_click
+        }
+    
+    def _on_category_click(self, idx: int) -> None:
+        """Handle category button clicks."""
+        if idx in self._category_callbacks:
+            self._category_callbacks[idx]["click"](idx)
+    
+    def bind_keyboard_shortcuts(self) -> None:
+        """Bind keyboard shortcuts."""
+        with dpg.handler_registry():
+            # Numeric keys for categories
+            for i in range(9):
+                dpg.add_key_press_handler(
+                    dpg.mvKey_1 + i,
+                    callback=lambda s, a, u: self._on_category_click(u),
+                    user_data=i
+                )
+            # Arrow keys for navigation
+            dpg.add_key_press_handler(dpg.mvKey_Left, callback=lambda: self._on_prev())
+            dpg.add_key_press_handler(dpg.mvKey_Right, callback=lambda: self._on_next())
+    
+    def _on_viewport_resize(self) -> None:
+        """Handle viewport resize events."""
+        self.width = dpg.get_viewport_width()
+        self.height = dpg.get_viewport_height()
+        dpg.configure_item("main_window", width=self.width, height=self.height)
