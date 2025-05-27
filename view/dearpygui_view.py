@@ -26,22 +26,20 @@ class DearPyGuiView(BaseView):
         
         # Create texture registry first
         with dpg.texture_registry() as self.texture_registry:
-            # Create a 1x1 transparent texture as a placeholder
+            # Create a 1x1 transparent RGBA texture as a placeholder
             self.placeholder_texture_tag = "placeholder_texture"
-            dpg.add_raw_texture(
+            dpg.add_dynamic_texture(
                 width=1,
                 height=1,
-                default_value=[0.0, 0.0, 0.0],
-                format=dpg.mvFormat_Float_rgb,
+                default_value=[0.0, 0.0, 0.0, 0.0],
                 tag=self.placeholder_texture_tag
             )
             # Create a main image texture (will be resized as needed)
             self.image_texture_tag = "image_texture"
-            dpg.add_raw_texture(
+            dpg.add_dynamic_texture(
                 width=1,
                 height=1,
-                default_value=[0.0, 0.0, 0.0],
-                format=dpg.mvFormat_Float_rgb,
+                default_value=[0.0, 0.0, 0.0, 0.0],
                 tag=self.image_texture_tag
             )
         
@@ -149,22 +147,26 @@ class DearPyGuiView(BaseView):
                 dpg.configure_item("image_display", texture_tag=self.placeholder_texture_tag, width=400, height=300)
             # Reset the image texture to 1x1 transparent
             if dpg.does_item_exist(self.image_texture_tag):
-                dpg.set_value(self.image_texture_tag, [0.0, 0.0, 0.0])
+                dpg.set_value(self.image_texture_tag, [0.0, 0.0, 0.0, 0.0])
                 dpg.configure_item(self.image_texture_tag, width=1, height=1)
             return
 
-        # Always convert to RGB
-        if photo.mode != "RGB":
-            photo = photo.convert("RGB")
-        img_array = np.asarray(photo).astype(np.float32) / 255.0
+        # Always convert to RGBA for DearPyGui 2.x
+        if photo.mode != "RGBA":
+            photo = photo.convert("RGBA")
+        img_array = np.asarray(photo).astype(np.float32) / 255.0  # Normalize to [0,1]
         if img_array.ndim == 2:
-            img_array = np.stack([img_array] * 3, axis=-1)
-        if img_array.shape[2] > 3:
-            img_array = img_array[:, :, :3]
+            img_array = np.stack([img_array] * 4, axis=-1)
+        if img_array.shape[2] == 3:
+            # Add alpha channel if missing
+            alpha = np.ones((img_array.shape[0], img_array.shape[1], 1), dtype=np.float32)
+            img_array = np.concatenate([img_array, alpha], axis=-1)
+        elif img_array.shape[2] > 4:
+            img_array = img_array[:, :, :4]
         height, width = img_array.shape[:2]
         img_list = img_array.flatten().tolist()
 
-        # Update the existing texture with new image data and size
+        # Update the existing dynamic texture with new image data and size
         dpg.set_value(self.image_texture_tag, img_list)
         dpg.configure_item(self.image_texture_tag, width=width, height=height)
         dpg.configure_item("image_display", texture_tag=self.image_texture_tag, width=width, height=height)
