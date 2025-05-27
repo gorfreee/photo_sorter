@@ -1,0 +1,11 @@
+# requirements.txt
+#
+# This file lists all Python package dependencies required to run the Photo Sorter application.
+# It ensures that all contributors and users install compatible versions of each library, avoiding version conflicts and runtime errors.
+#
+# Update this file whenever you add or upgrade a dependency in the project.
+
+# Developed with Python 3.12
+dearpygui==2.0.0
+pillow==10.4.0
+numpy==1.26.1
