@@ -53,11 +53,13 @@ class DearPyGuiView(BaseView):
         dpg.create_viewport(title="Photo Sorter", width=self.width, height=self.height, x_pos=self.x, y_pos=self.y)
         dpg.setup_dearpygui()
         
-        # Main window: fixed bar, no label, not collapsible or movable
-        with dpg.window(label="", tag="main_window", no_close=True, no_collapse=True, no_move=True, width=self.width, height=self.height, pos=[0,0]):
-            # Add About button in the top left corner of the bar
-            dpg.add_button(label="About", tag="about_button", width=70, pos=[5, 5], callback=self.show_about_popup)
-            # Create image display area
+        # Main window: remove title bar and borders for a clean look
+        with dpg.window(label="", tag="main_window", no_close=True, no_collapse=True, no_move=True, no_title_bar=True, width=self.width, height=self.height, pos=[0,0]):
+            # Add a menu bar integrated into the top
+            with dpg.menu_bar():
+                with dpg.menu(label="Menu"):
+                    dpg.add_menu_item(label="About", callback=self.show_about_popup)
+            # Create image display area and controls
             dpg.add_group(horizontal=True, tag="top_controls")
             dpg.add_button(label="Select Folder", callback=self._on_select_folder, parent="top_controls")
             dpg.add_button(label="Reset", tag="reset_button", parent="top_controls")
@@ -85,13 +87,19 @@ class DearPyGuiView(BaseView):
             no_collapse=True,
             no_move=True,
             width=400,
-            height=220
+            height=180
         ):
-            dpg.add_text("Photo Sorter\n\nDeveloper: Guillermo Peralta")
+            dpg.add_text("Photo Sorter")
             dpg.add_text("GitHub: ")
             dpg.add_same_line()
-            dpg.add_text("github.com/guillperalta/photo_sorter", color=[0, 102, 204])
-            dpg.add_text("\nLicense: MIT License")
+            dpg.add_text("github.com/guillperalta/photo_sorter", color=[0, 102, 204],
+                         bullet=False, 
+                         tag="github_link",
+                         show=True)
+            dpg.add_spacer(height=10)
+            dpg.add_text("License: MIT License")
+            dpg.add_spacer(height=10)
+            dpg.add_button(label="Open GitHub", width=100, callback=lambda: os.system('start https://github.com/guillperalta/photo_sorter'))
             dpg.add_spacer(height=10)
             dpg.add_button(label="Close", width=60, callback=lambda: dpg.configure_item("about_popup", show=False))
 
