@@ -23,11 +23,12 @@ def move_image(src: Path, dest_folder: Path) -> None:
     dest_folder.mkdir(parents=True, exist_ok=True)
     shutil.move(str(src), str(dest_folder))
 
-def create_thumbnail(image_path: Path, size=(600, 400)) -> Image.Image:
+def create_thumbnail(image_path: Path, size=(400, 300)) -> Image.Image:
     """
     Create a thumbnail for the given image path and return a PIL Image object.
-    The model layer should not depend on any UI-specific modules.
+    Always resize to the fixed size for consistent Dear PyGui display.
     """
     img = Image.open(image_path)
-    img.thumbnail(size)
+    img = img.convert("RGBA")
+    img = img.resize(size, Image.Resampling.LANCZOS)
     return img  # Return the PIL Image object

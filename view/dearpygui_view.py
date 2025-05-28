@@ -23,6 +23,10 @@ class DearPyGuiView(BaseView):
         self.height = 600
         self.x = 100
         self.y = 100
+
+        # Define fixed dimensions for the image display area
+        self.image_display_width = 400
+        self.image_display_height = 300
         
         # Create texture registry first
         with dpg.texture_registry() as self.texture_registry:
@@ -31,15 +35,17 @@ class DearPyGuiView(BaseView):
             dpg.add_dynamic_texture(
                 width=1,
                 height=1,
-                default_value=[0.0, 0.0, 0.0, 0.0],
+                default_value=[0.0, 0.0, 0.0, 0.0], # 1x1 transparent
                 tag=self.placeholder_texture_tag
             )
-            # Create a main image texture (will be resized as needed)
+            # Create a main image texture with fixed dimensions
             self.image_texture_tag = "image_texture"
+            # Initial empty/transparent data for the fixed size texture
+            initial_texture_data = [0.0] * (self.image_display_width * self.image_display_height * 4) # RGBA
             dpg.add_dynamic_texture(
-                width=1,
-                height=1,
-                default_value=[0.0, 0.0, 0.0, 0.0],
+                width=self.image_display_width,
+                height=self.image_display_height,
+                default_value=initial_texture_data,
                 tag=self.image_texture_tag
             )
         
@@ -59,7 +65,8 @@ class DearPyGuiView(BaseView):
             # Image display group
             with dpg.group(horizontal=True):
                 dpg.add_button(label="<", callback=self._on_prev)
-                dpg.add_image(texture_tag=self.image_texture_tag, tag="image_display", width=400, height=300)
+                # Use the fixed dimensions for the image widget
+                dpg.add_image(texture_tag=self.image_texture_tag, tag="image_display", width=self.image_display_width, height=self.image_display_height)
                 dpg.add_button(label=">", callback=self._on_next)
             
             # Category buttons container
@@ -142,35 +149,58 @@ class DearPyGuiView(BaseView):
 
     def show_image(self, photo: Optional[Image.Image]) -> None:
         """Display the given PIL image in the DearPyGui window."""
+        # Use the fixed dimensions defined in __init__
+        FIXED_WIDTH, FIXED_HEIGHT = self.image_display_width, self.image_display_height
+        
         if photo is None:
             if dpg.does_item_exist("image_display"):
-                dpg.configure_item("image_display", texture_tag=self.placeholder_texture_tag, width=400, height=300)
-            # Reset the image texture to 1x1 transparent
-            if dpg.does_item_exist(self.image_texture_tag):
-                dpg.set_value(self.image_texture_tag, [0.0, 0.0, 0.0, 0.0])
-                dpg.configure_item(self.image_texture_tag, width=1, height=1)
+                # Switch the image widget to display the placeholder texture
+                dpg.configure_item("image_display", texture_tag=self.placeholder_texture_tag, width=FIXED_WIDTH, height=FIXED_HEIGHT)
+            # Do not modify self.image_texture_tag here, as it's fixed size and holds last image or initial data.
+            # If you want to clear it to transparent when no image, you can set its value to transparent data:
+            # transparent_data = [0.0] * (FIXED_WIDTH * FIXED_HEIGHT * 4)
+            # dpg.set_value(self.image_texture_tag, transparent_data)
+            # For now, we'll let it show the last valid image or its initial state.
             return
 
-        # Always convert to RGBA for DearPyGui 2.x
+        # Always convert to RGBA for DearPyGui
         if photo.mode != "RGBA":
             photo = photo.convert("RGBA")
+        
+        # Resize to fixed display dimensions if not already (model.create_thumbnail should handle this)
+        if photo.size != (FIXED_WIDTH, FIXED_HEIGHT):
+            photo = photo.resize((FIXED_WIDTH, FIXED_HEIGHT), Image.Resampling.LANCZOS)
+            
         img_array = np.asarray(photo).astype(np.float32) / 255.0  # Normalize to [0,1]
-        if img_array.ndim == 2:
-            img_array = np.stack([img_array] * 4, axis=-1)
-        if img_array.shape[2] == 3:
-            # Add alpha channel if missing
-            alpha = np.ones((img_array.shape[0], img_array.shape[1], 1), dtype=np.float32)
-            img_array = np.concatenate([img_array, alpha], axis=-1)
-        elif img_array.shape[2] > 4:
-            img_array = img_array[:, :, :4]
-        height, width = img_array.shape[:2]
+        
+        # Ensure 4 channels (RGBA)
+        if img_array.ndim == 2: # Grayscale
+            # Convert to RGBA: R=G=B=grayscale_value, A=1.0
+            img_array = np.stack([img_array]*3 + [np.ones_like(img_array)], axis=-1)
+        elif img_array.shape[2] == 3: # RGB
+            # Add alpha channel (fully opaque)
+            alpha_channel = np.ones((img_array.shape[0], img_array.shape[1], 1), dtype=np.float32)
+            img_array = np.concatenate((img_array, alpha_channel), axis=-1)
+        elif img_array.shape[2] > 4: # More than 4 channels
+            img_array = img_array[:, :, :4] # Keep only the first 4 (RGBA)
+
+        # Ensure the array is C-contiguous for DearPyGui
+        if not img_array.flags['C_CONTIGUOUS']:
+            img_array = np.ascontiguousarray(img_array)
+
         img_list = img_array.flatten().tolist()
 
-        # Update the existing dynamic texture with new image data and size
+        # Update the existing dynamic texture (which is already FIXED_WIDTH x FIXED_HEIGHT)
         dpg.set_value(self.image_texture_tag, img_list)
-        dpg.configure_item(self.image_texture_tag, width=width, height=height)
-        dpg.configure_item("image_display", texture_tag=self.image_texture_tag, width=width, height=height)
-        dpg.set_item_label("image_display", f"{width}x{height}")  # Optional: show size for debug
+        
+        # Ensure the image_display widget uses the main image_texture_tag
+        # and its dimensions are correctly set (they match FIXED_WIDTH, FIXED_HEIGHT).
+        if dpg.does_item_exist("image_display"):
+            dpg.configure_item("image_display", 
+                               texture_tag=self.image_texture_tag, 
+                               width=FIXED_WIDTH, 
+                               height=FIXED_HEIGHT)
+        dpg.set_item_label("image_display", f"{FIXED_WIDTH}x{FIXED_HEIGHT}")  # Optional: show size for debug
     
     def destroy(self) -> None:
         """Clean up DPG resources and close the window."""
