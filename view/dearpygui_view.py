@@ -53,7 +53,10 @@ class DearPyGuiView(BaseView):
         dpg.create_viewport(title="Photo Sorter", width=self.width, height=self.height, x_pos=self.x, y_pos=self.y)
         dpg.setup_dearpygui()
         
-        with dpg.window(label="Main Window", tag="main_window", no_close=True):
+        # Main window: fixed bar, no label, not collapsible or movable
+        with dpg.window(label="", tag="main_window", no_close=True, no_collapse=True, no_move=True, width=self.width, height=self.height, pos=[0,0]):
+            # Add About button in the top left corner of the bar
+            dpg.add_button(label="About", tag="about_button", width=70, pos=[5, 5], callback=self.show_about_popup)
             # Create image display area
             dpg.add_group(horizontal=True, tag="top_controls")
             dpg.add_button(label="Select Folder", callback=self._on_select_folder, parent="top_controls")
@@ -72,6 +75,26 @@ class DearPyGuiView(BaseView):
             # Category buttons container
             dpg.add_group(tag="categories_container")
         
+        # About popup (hidden by default)
+        with dpg.window(
+            label="About",
+            modal=True,
+            show=False,
+            tag="about_popup",
+            no_close=True,
+            no_collapse=True,
+            no_move=True,
+            width=400,
+            height=220
+        ):
+            dpg.add_text("Photo Sorter\n\nDeveloper: Guillermo Peralta")
+            dpg.add_text("GitHub: ")
+            dpg.add_same_line()
+            dpg.add_text("github.com/guillperalta/photo_sorter", color=[0, 102, 204])
+            dpg.add_text("\nLicense: MIT License")
+            dpg.add_spacer(height=10)
+            dpg.add_button(label="Close", width=60, callback=lambda: dpg.configure_item("about_popup", show=False))
+
         # Callbacks dictionary
         self._callbacks: Dict[str, Callable] = {}
         self._category_callbacks: Dict[int, Dict[str, Callable]] = {}
@@ -85,6 +108,15 @@ class DearPyGuiView(BaseView):
         
         # Start DPG
         dpg.show_viewport()
+
+        # Ensure main window always fills the viewport on resize
+        def update_main_window_size():
+            win_width = dpg.get_viewport_width()
+            win_height = dpg.get_viewport_height()
+            dpg.configure_item("main_window", width=win_width, height=win_height)
+        dpg.set_viewport_resize_callback(lambda: update_main_window_size())
+        # Set initial size to fill viewport
+        update_main_window_size()
 
     def _on_select_folder(self) -> None:
         """Internal handler for select folder button."""
@@ -289,3 +321,13 @@ class DearPyGuiView(BaseView):
         self.width = dpg.get_viewport_width()
         self.height = dpg.get_viewport_height()
         dpg.configure_item("main_window", width=self.width, height=self.height)
+
+    def show_about_popup(self, sender, app_data, user_data=None):
+        # Center the popup in the viewport
+        vp_width, vp_height = dpg.get_viewport_client_width(), dpg.get_viewport_client_height()
+        popup_width, popup_height = 400, 220
+        dpg.set_item_pos("about_popup", [
+            (vp_width - popup_width) // 2,
+            (vp_height - popup_height) // 2
+        ])
+        dpg.configure_item("about_popup", show=True)
