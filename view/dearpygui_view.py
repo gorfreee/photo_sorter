@@ -87,21 +87,30 @@ class DearPyGuiView(BaseView):
             no_collapse=True,
             no_move=True,
             width=400,
-            height=180
+            height=160
         ):
             dpg.add_text("Photo Sorter")
-            dpg.add_text("GitHub: ")
-            dpg.add_same_line()
-            dpg.add_text("github.com/guillperalta/photo_sorter", color=[0, 102, 204],
-                         bullet=False, 
-                         tag="github_link",
-                         show=True)
-            dpg.add_spacer(height=10)
+            dpg.add_spacer(height=2)
+            # GitHub row
+            with dpg.group(horizontal=True):
+                dpg.add_text("GitHub:")
+                dpg.add_same_line()
+                dpg.add_text(
+                    "https://github.com/gorfreee/photo_sorter",
+                    color=[0, 102, 204],
+                    bullet=False,
+                    tag="github_link",
+                    show=True
+                )
+            dpg.add_spacer(height=2)
             dpg.add_text("License: MIT License")
             dpg.add_spacer(height=10)
-            dpg.add_button(label="Open GitHub", width=100, callback=lambda: os.system('start https://github.com/guillperalta/photo_sorter'))
-            dpg.add_spacer(height=10)
-            dpg.add_button(label="Close", width=60, callback=lambda: dpg.configure_item("about_popup", show=False))
+            # Centered row for buttons
+            with dpg.group(horizontal=True):
+                dpg.add_spacer(width=60)  # left margin for centering
+                dpg.add_button(label="Open GitHub", width=120, callback=lambda: os.system('start https://github.com/gorfreee/photo_sorter'))
+                dpg.add_spacer(width=10)
+                dpg.add_button(label="Close", width=80, callback=lambda: dpg.configure_item("about_popup", show=False))
 
         # Callbacks dictionary
         self._callbacks: Dict[str, Callable] = {}
