@@ -3,8 +3,7 @@
 # This file keeps UI dialog logic modular and reusable within the view layer.
 
 import dearpygui.dearpygui as dpg
-from typing import Dict, Any, Callable
-# Add tkinter import for native folder dialog
+from typing import Dict, Callable
 import tkinter as tk
 from tkinter import filedialog
 
@@ -37,7 +36,7 @@ def show_error(message: str) -> None:
     _show_message_dialog("Error", message)
 
 
-def configure_category(root: Any, idx: int, initial: Dict[str, str], callback: Callable) -> None:
+def configure_category(idx: int, initial: Dict[str, str], callback: Callable) -> None:
     """
     Show a dialog to configure category name and path.
     Calls the callback with a dict: {'action': 'save'|'delete'|'cancel', ...data}

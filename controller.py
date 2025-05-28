@@ -121,7 +121,7 @@ class PhotoSorterController:
                     save_config(self.config)
                     self.build_category_buttons()
             # No action needed for cancel
-        configure_category(self.view, idx, initial, on_dialog_result)
+        configure_category(idx, initial, on_dialog_result)
 
     def assign_category(self, idx):
         if not self.images:

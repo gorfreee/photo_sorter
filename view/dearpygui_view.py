@@ -1,12 +1,9 @@
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 """
 DearPyGui implementation of the photo sorter UI.
 Implements the BaseView interface for UI backend swapping.
 """
 from pathlib import Path
+import os  # Required for os.system in Open GitHub button
 import dearpygui.dearpygui as dpg
 from view.base_view import BaseView
 import numpy as np
@@ -94,7 +91,6 @@ class DearPyGuiView(BaseView):
             # GitHub row
             with dpg.group(horizontal=True):
                 dpg.add_text("GitHub:")
-                dpg.add_same_line()
                 dpg.add_text(
                     "https://github.com/gorfreee/photo_sorter",
                     color=[0, 102, 204],
