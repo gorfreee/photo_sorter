@@ -148,17 +148,57 @@ class DearPyGuiView(BaseView):
 
     def geometry(self, new_geometry: Optional[str] = None) -> str:
         if new_geometry:
-            # Parse geometry string (format: "widthxheight+x+y")
-            parts = new_geometry.replace("+", "x+").split("+")
-            size = parts[0].split("x")
-            self.width, self.height = map(int, size)
-            if len(parts) > 1:
-                self.x, self.y = map(int, parts[1:])
-            dpg.set_viewport_pos([self.x, self.y])
-            dpg.set_viewport_width(self.width)
-            dpg.set_viewport_height(self.height)
-            # Update main window size
-            dpg.configure_item("main_window", width=self.width, height=self.height)
+            try:
+                parts = new_geometry.replace(" ", "").replace("+", "x+").split("+") # Normalize and split
+                
+                # Default to current values if parsing fails or parts are missing
+                parsed_w, parsed_h = self.width, self.height
+                parsed_x, parsed_y = self.x, self.y
+
+                if parts and parts[0]: # Process width and height
+                    size_parts = parts[0].split("x")
+                    if len(size_parts) == 2:
+                        w_str, h_str = size_parts
+                        if w_str: parsed_w = int(w_str)
+                        if h_str: parsed_h = int(h_str)
+                
+                if len(parts) > 1 and parts[1]: # Process x position
+                    if parts[1]: parsed_x = int(parts[1])
+                
+                if len(parts) > 2 and parts[2]: # Process y position
+                    if parts[2]: parsed_y = int(parts[2])
+
+                self.width, self.height = parsed_w, parsed_h
+                self.x, self.y = parsed_x, parsed_y
+
+            except ValueError:
+                # Log error or handle silently, falling back to current/default values
+                # For example, you could use dpg.log_warning or print a message
+                print(f"Warning: Could not parse geometry string '{new_geometry}'. Using current values.")
+                # self.width, self.height, self.x, self.y remain unchanged or use defaults
+            
+            # Apply to DPG, ensuring minimum reasonable size and valid positions
+            # Ensure x and y are not None before using them
+            current_x, current_y = dpg.get_viewport_pos() if dpg.is_dearpygui_running() else (100, 100)
+            self.x = self.x if self.x is not None else current_x
+            self.y = self.y if self.y is not None else current_y
+            
+            # Ensure width and height are reasonable
+            self.width = max(100, self.width if self.width is not None else 800)
+            self.height = max(100, self.height if self.height is not None else 600)
+
+            if dpg.is_dearpygui_running():
+                dpg.set_viewport_pos([self.x, self.y])
+                dpg.set_viewport_width(self.width)
+                dpg.set_viewport_height(self.height)
+                # Update main window size
+                if dpg.does_item_exist("main_window"):
+                    dpg.configure_item("main_window", width=self.width, height=self.height)
+            else:
+                # If DPG is not running (e.g. during init before start_dearpygui),
+                # these values will be used when dpg.create_viewport is called.
+                pass
+                
         return f"{self.width}x{self.height}+{self.x}+{self.y}"
 
     def protocol(self, protocol_name: str, callback: Optional[Callable] = None) -> None:

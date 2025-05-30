@@ -103,57 +103,74 @@ class PhotoSorterController:
         self.edit_category(idx)
 
     def edit_category(self, idx):
-        categories = self.config.get("categories", [])
-        initial = categories[idx] if idx < len(categories) else {"name": "", "path": ""}
-        # Use callback-based dialog for DearPyGui
-        def on_dialog_result(result):
-            if result.get("action") == "save":
-                while len(categories) <= idx:
-                    categories.append({"name": "", "path": ""})
-                categories[idx] = {"name": result["name"], "path": result["path"]}
-                self.config["categories"] = categories
+        current_name = self.config["categories"][idx]["name"] if idx < len(self.config["categories"]) else ""
+        current_path = self.config["categories"][idx]["path"] if idx < len(self.config["categories"]) else ""
+        
+        # The callback for configure_category expects a dictionary.
+        def _handle_category_config_result(result: dict):
+            action = result.get('action')
+            if action == 'save':
+                new_name = result.get('name', '')
+                new_path = result.get('path', '')
+                if idx >= len(self.config["categories"]):
+                    self.config["categories"].extend([{"name": "", "path": ""}] * (idx + 1 - len(self.config["categories"])))
+                self.config["categories"][idx] = {"name": new_name, "path": str(Path(new_path))} # Ensure path is string
                 save_config(self.config)
-                self.build_category_buttons()
-            elif result.get("action") == "delete":
-                if idx < len(categories):
-                    categories[idx] = {"name": "", "path": ""}
-                    self.config["categories"] = categories
+                self.build_category_buttons() # Rebuild to reflect changes
+            elif action == 'delete':
+                if idx < len(self.config["categories"]):
+                    self.config["categories"][idx] = {"name": "", "path": ""} # Clear the category
                     save_config(self.config)
                     self.build_category_buttons()
-            # No action needed for cancel
-        configure_category(idx, initial, on_dialog_result)
+            # 'cancel' action does nothing here
+
+        configure_category(idx, {"name": current_name, "path": current_path}, _handle_category_config_result)
 
     def assign_category(self, idx):
-        if not self.images:
+        if not self.images or not (0 <= idx < len(self.config["categories"])):
             return
-        categories = self.config.get("categories", [])
-        cat = categories[idx]
-        dest = Path(cat["path"])
-        src = self.images[self.current_index]
+        
+        category = self.config["categories"][idx]
+        if not category["name"] or not category["path"]:
+            show_error("Category Not Configured: Please configure this category (name and path) before assigning images.")
+            return
+
+        img_path = self.images[self.current_index]
+        dest_folder = Path(category["path"])
+        
         try:
-            move_image(src, dest)
+            move_image(img_path, dest_folder)
+            # Remove moved image from list and update display
             self.images.pop(self.current_index)
+            if not self.images: # No more images
+                self.view.show_image(None)
+                self.view.update_status("All images sorted from this folder!")
+                self.current_folder = None # Reset current folder
+                self.config["last_folder"] = "" # Clear last folder from config
+                save_config(self.config)
+                return
+
             if self.current_index >= len(self.images):
-                self.current_index = max(0, len(self.images) - 1)
-            if self.images:
-                self.show_current()
-            else:
-                show_info("All photos have been sorted.")
-                self.view.quit()
+                self.current_index = len(self.images) - 1
+            
+            self.show_current() # Show next or previous image
         except Exception as e:
-            show_error(f"Failed to move file: {e}")    
+            show_error(f"Error Moving Image: Could not move {img_path.name}: {e}")
     
     def reset_categories_and_source(self):
-        """Reset only categories and last_folder, keep window_size."""
         self.config["categories"] = []
         self.config["last_folder"] = ""
         save_config(self.config)
+        
         self.current_folder = None
         self.images = []
         self.current_index = 0
+        
         self.build_category_buttons()
         self.view.show_image(None)
-        self.view.update_status("Select a source folder.")
+        self.view.update_status("Select a source folder")
+        
+        show_info("Reset Complete: Categories and source folder have been reset.")
 
     def on_close(self):
         """Handle window close event by saving window size and position, then closing the application."""
@@ -166,5 +183,5 @@ class PhotoSorterController:
         self.config["window_size"] = [width, height]
         self.config["window_position"] = [x, y]
         save_config(self.config)
-        # Destroy the window
-        self.view.destroy()
+        # self.view.destroy() # This line was causing recursion, removed.
+        # The view's actual destruction will be handled by the UI library's shutdown process.
