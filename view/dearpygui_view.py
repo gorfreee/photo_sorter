@@ -289,12 +289,11 @@ class DearPyGuiView(BaseView):
         """Set up category buttons."""
         if dpg.does_item_exist("categories_container"):
             dpg.delete_item("categories_container", children_only=True)
-            
+        self._category_callbacks.clear()  # Clear old callbacks to prevent duplication
         for idx in range(9):
             cat = categories[idx] if idx < len(categories) else {"name": "", "path": ""}
             name = cat.get("name", "")
             button_text = f"{idx + 1}: {name}" if name else f"{idx + 1}: [Empty]"
-            
             with dpg.group(parent="categories_container", horizontal=True):
                 dpg.add_button(
                     label=button_text,
@@ -316,7 +315,10 @@ class DearPyGuiView(BaseView):
             self._category_callbacks[idx]["click"](idx)
     
     def bind_keyboard_shortcuts(self) -> None:
-        """Bind keyboard shortcuts."""
+        """Bind keyboard shortcuts only once."""
+        if hasattr(self, '_keyboard_handlers_registered') and self._keyboard_handlers_registered:
+            return
+        self._keyboard_handlers_registered = True
         with dpg.handler_registry():
             # Numeric keys for categories
             for i in range(9):
