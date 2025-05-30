@@ -10,15 +10,16 @@ from view.dialogs import configure_category, show_error
 from typing import Callable
 
 class PhotoSorterController:
+    THUMBNAIL_PRELOAD_COUNT = 15  # Number of thumbnails to preload for instant navigation
+
     def __init__(self):
         # Load configuration and initialize state
         self.config = load_config()
         last_folder = self.config.get("last_folder", "")
-        self.current_folder = Path(last_folder) if last_folder else None
-        self.images = list_images(self.current_folder) if self.current_folder and self.current_folder.exists() else []
+        self.current_folder = None
+        self.images = []
         self.current_index = 0
-
-        # Initialize view, set window size and position from config, and bind close event
+        self.thumbnail_cache = {}  # Cache for thumbnails
         # Instantiate view using factory for pluggable UI backends
         self.view = create_view(self.config)
         # TODO: In the future, replace MainWindow with BaseView implementation (e.g., DearPyGuiView)
@@ -54,6 +55,13 @@ class PhotoSorterController:
             save_config(self.config)
             self.images = list_images(self.current_folder)
             self.current_index = 0
+            self.thumbnail_cache = {}  # Clear cache when new folder is selected
+            # Preload thumbnails for the first N images
+            for img_path in self.images[:self.THUMBNAIL_PRELOAD_COUNT]:
+                try:
+                    self.thumbnail_cache[img_path] = create_thumbnail(img_path)
+                except Exception:
+                    self.thumbnail_cache[img_path] = None
             self.show_current()
 
     def show_current(self):
@@ -62,8 +70,14 @@ class PhotoSorterController:
             self.view.update_status("No images found.")
             return
         img_path = self.images[self.current_index]
-        pil_thumb = create_thumbnail(img_path)
-        # Pass PIL Image directly to the view (DearPyGui handles PIL images)
+        # Use cached thumbnail if available, else load and cache it
+        pil_thumb = self.thumbnail_cache.get(img_path)
+        if pil_thumb is None:
+            try:
+                pil_thumb = create_thumbnail(img_path)
+            except Exception:
+                pil_thumb = None
+            self.thumbnail_cache[img_path] = pil_thumb
         self.view.show_image(pil_thumb)
         # Get file size in kilobytes
         try:
@@ -73,15 +87,25 @@ class PhotoSorterController:
         self.view.update_status(f"{img_path.name} ({self.current_index+1}/{len(self.images)})", file_size_kb=file_size_kb)
 
     def next_image(self):
+        if not self.images:
+            return
         if self.current_index < len(self.images) - 1:
             self.current_index += 1
-            # Update display after moving index
+            # Optionally, preload next thumbnail if approaching end of cache
+            if (self.current_index + 1 < len(self.images)
+                and self.images[self.current_index + 1] not in self.thumbnail_cache
+                and self.current_index + 1 < self.THUMBNAIL_PRELOAD_COUNT + 10):
+                try:
+                    self.thumbnail_cache[self.images[self.current_index + 1]] = create_thumbnail(self.images[self.current_index + 1])
+                except Exception:
+                    self.thumbnail_cache[self.images[self.current_index + 1]] = None
             self.show_current()
 
     def prev_image(self):
+        if not self.images:
+            return
         if self.current_index > 0:
             self.current_index -= 1
-            # Update display after moving index
             self.show_current()
 
     def build_category_buttons(self, event=None):
