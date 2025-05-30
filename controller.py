@@ -6,7 +6,7 @@ from pathlib import Path
 from config import load_config, save_config
 from model import list_images, move_image, create_thumbnail
 from view.factory import create_view
-from view.dialogs import configure_category, show_info, show_error
+from view.dialogs import configure_category, show_error
 from typing import Callable
 
 class PhotoSorterController:
@@ -169,8 +169,6 @@ class PhotoSorterController:
         self.build_category_buttons()
         self.view.show_image(None)
         self.view.update_status("Select a source folder")
-        
-        show_info("Reset Complete: Categories and source folder have been reset.")
 
     def on_close(self):
         """Handle window close event by saving window size and position, then closing the application."""
