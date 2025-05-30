@@ -335,12 +335,32 @@ class DearPyGuiView(BaseView):
             name = cat.get("name", "")
             button_text = f"{idx + 1}: {name}" if name else f"{idx + 1}: [Empty]"
             with dpg.group(parent="categories_container", horizontal=True):
+                btn_id = dpg.generate_uuid()
                 dpg.add_button(
                     label=button_text,
                     callback=lambda s, a, u: self._on_category_click(u),
                     user_data=idx,
-                    width=200
+                    width=200,
+                    tag=btn_id
                 )
+                # Add right-click handler
+                with dpg.item_handler_registry() as handler_id:
+                    dpg.add_item_clicked_handler(
+                        button=dpg.mvMouseButton_Right,
+                        callback=lambda s, a, u: self._on_category_right_click(u),
+                        user_data=idx
+                    )
+                dpg.bind_item_handler_registry(btn_id, handler_id)
+
+    def _on_category_click(self, idx: int) -> None:
+        """Handle category button clicks."""
+        if idx in self._category_callbacks:
+            self._category_callbacks[idx]["click"](idx)
+    
+    def _on_category_right_click(self, idx: int) -> None:
+        """Handle right-click on category button."""
+        if idx in self._category_callbacks:
+            self._category_callbacks[idx]["right"](idx)
     
     def bind_category(self, idx: int, on_click: Callable[[int], None], on_right_click: Callable[[int], None]) -> None:
         """Bind category button callbacks."""
@@ -348,11 +368,6 @@ class DearPyGuiView(BaseView):
             "click": on_click,
             "right": on_right_click
         }
-    
-    def _on_category_click(self, idx: int) -> None:
-        """Handle category button clicks."""
-        if idx in self._category_callbacks:
-            self._category_callbacks[idx]["click"](idx)
     
     def bind_keyboard_shortcuts(self) -> None:
         """Bind keyboard shortcuts only once."""
