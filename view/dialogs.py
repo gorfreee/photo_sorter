@@ -2,23 +2,34 @@
 # Contains dialog functions for showing info, warning, error messages, and category configuration dialogs.
 # This file keeps UI dialog logic modular and reusable within the view layer.
 
-import dearpygui.dearpygui as dpg
 from typing import Dict, Callable
-import tkinter as tk
 from tkinter import filedialog
+import dearpygui.dearpygui as dpg
+import uuid
+
+
+def _center_window(window_id: str, width: int, height: int) -> None:
+    """Utility to center a DearPyGui window in the viewport."""
+    vp_width = dpg.get_viewport_client_width()
+    vp_height = dpg.get_viewport_client_height()
+    x = max((vp_width - width) // 2, 0)
+    y = max((vp_height - height) // 2, 0)
+    dpg.set_item_pos(window_id, [x, y])
 
 
 def _show_message_dialog(title: str, message: str, width: int = 300, height: int = 100) -> None:
-    """Helper function to show a modal dialog with a message and OK button."""
-    window_id = dpg.generate_uuid()
+    """Helper function to show a modal dialog with a message and OK button, centered."""
+    window_id = str(dpg.generate_uuid())
 
     def _close_dialog():
-        if dpg.does_item_exist(window_id):
-            dpg.delete_item(window_id)
+        dpg.delete_item(window_id)
 
     with dpg.window(label=title, modal=True, show=True, width=width, height=height, tag=window_id):
         dpg.add_text(message)
+        dpg.add_spacer(height=10)
         dpg.add_button(label="OK", callback=_close_dialog)
+    # Center after creation
+    _center_window(window_id, width, height)
 
 
 def show_info(message: str) -> None:
@@ -38,44 +49,60 @@ def show_error(message: str) -> None:
 
 def configure_category(idx: int, initial: Dict[str, str], callback: Callable) -> None:
     """
-    Show a dialog to configure category name and path.
-    Calls the callback with a dict: {'action': 'save'|'delete'|'cancel', ...data}
+    Show a modal dialog to configure a category, centered.
+    Includes: name input, destination folder input with Browse button (native Windows folder dialog),
+    and OK, Cancel, Delete buttons.
     """
-    name_value = initial.get('name', '')
-    path_value = initial.get('path', '')
-    window_id = dpg.generate_uuid()
+    import dearpygui.dearpygui as dpg
+    import uuid
+    import tkinter as tk
+    from tkinter import filedialog
 
-    def save_callback():
-        result = {
-            'action': 'save',
-            'name': dpg.get_value(f"cat_name_{window_id}"),
-            'path': dpg.get_value(f"cat_path_{window_id}")
-        }
+    # Unique window/tag IDs to avoid alias conflicts
+    window_id = f"category_config_{idx}_{uuid.uuid4()}"
+    name_id = f"cat_name_{window_id}"
+    folder_id = f"cat_folder_{window_id}"
+
+    width, height = 420, 210
+
+    def _on_ok():
+        callback({
+            "action": "save",
+            "idx": idx,
+            "name": dpg.get_value(name_id),
+            "path": dpg.get_value(folder_id)  # Changed from 'folder' to 'path'
+        })
         dpg.delete_item(window_id)
-        callback(result)
 
-    def delete_callback():
-        result = {'action': 'delete'}
+    def _on_cancel():
+        callback({"action": "cancel", "idx": idx})
         dpg.delete_item(window_id)
-        callback(result)
 
-    def cancel_callback():
+    def _on_delete():
+        callback({"action": "delete", "idx": idx})
         dpg.delete_item(window_id)
-        callback({'action': 'cancel'})
 
-    def browse_callback():
-        # Use native Windows folder selection dialog
+    def _on_browse():
+        # Use native Windows folder selection dialog via tkinter
         root = tk.Tk()
-        root.withdraw()  # Hide the main window
+        root.withdraw()
         folder_selected = filedialog.askdirectory(title="Select Destination Folder")
         root.destroy()
         if folder_selected:
-            dpg.set_value(f"cat_path_{window_id}", folder_selected)
+            dpg.set_value(folder_id, folder_selected)
 
-    with dpg.window(label=f"Edit Category {idx+1}", modal=True, tag=window_id, width=400, height=200):
-        dpg.add_input_text(label="Category Name", default_value=name_value, tag=f"cat_name_{window_id}")
-        dpg.add_input_text(label="Destination Folder", default_value=path_value, tag=f"cat_path_{window_id}")
-        dpg.add_button(label="Browse", callback=browse_callback)
-        dpg.add_button(label="Save", callback=save_callback)
-        dpg.add_button(label="Delete", callback=delete_callback)
-        dpg.add_button(label="Cancel", callback=cancel_callback)
+    with dpg.window(label=f"Edit Category {idx+1}", modal=True, tag=window_id, width=width, height=height, no_resize=True, no_collapse=True):
+        dpg.add_text("Category Name:")
+        dpg.add_input_text(tag=name_id, default_value=initial.get("name", ""), width=300)
+        dpg.add_spacer(height=5)
+        dpg.add_text("Destination Folder:")
+        with dpg.group(horizontal=True):
+            dpg.add_input_text(tag=folder_id, default_value=initial.get("path", ""), width=220)  # Use 'path' for initial value
+            dpg.add_button(label="Browse...", callback=_on_browse)
+        dpg.add_spacer(height=10)
+        with dpg.group(horizontal=True):
+            dpg.add_button(label="OK", callback=_on_ok)
+            dpg.add_button(label="Cancel", callback=_on_cancel)
+            dpg.add_button(label="Delete", callback=_on_delete)
+    # Center after creation
+    _center_window(window_id, width, height)

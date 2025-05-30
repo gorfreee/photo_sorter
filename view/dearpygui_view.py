@@ -392,12 +392,15 @@ class DearPyGuiView(BaseView):
         self.height = dpg.get_viewport_height()
         dpg.configure_item("main_window", width=self.width, height=self.height)
 
-    def show_about_popup(self, sender, app_data, user_data=None):
-        # Center the popup in the viewport
-        vp_width, vp_height = dpg.get_viewport_client_width(), dpg.get_viewport_client_height()
-        popup_width, popup_height = 400, 220
-        dpg.set_item_pos("about_popup", [
-            (vp_width - popup_width) // 2,
-            (vp_height - popup_height) // 2
-        ])
+    def _center_window(self, window_id: str, width: int, height: int) -> None:
+        """Utility to center a DearPyGui window in the viewport."""
+        vp_width = dpg.get_viewport_client_width()
+        vp_height = dpg.get_viewport_client_height()
+        x = max((vp_width - width) // 2, 0)
+        y = max((vp_height - height) // 2, 0)
+        dpg.set_item_pos(window_id, [x, y])
+
+    def show_about_popup(self, sender=None, app_data=None, user_data=None):
+        # Center the About popup in the viewport before showing
+        self._center_window("about_popup", 400, 160)
         dpg.configure_item("about_popup", show=True)
