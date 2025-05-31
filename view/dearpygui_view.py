@@ -312,22 +312,6 @@ class DearPyGuiView(BaseView):
         dpg.stop_dearpygui()
         self.destroy()
     
-    # Get current window width
-    def winfo_width(self) -> int:
-        return int(dpg.get_viewport_width())
-    
-    # Get current window height
-    def winfo_height(self) -> int:
-        return int(dpg.get_viewport_height())
-    
-    # Get current window x position
-    def winfo_x(self) -> int:
-        return int(dpg.get_viewport_pos()[0])
-    
-    # Get current window y position
-    def winfo_y(self) -> int:
-        return int(dpg.get_viewport_pos()[1])
-    
     # Update the status text in the UI
     def update_status(self, text: str, file_size_kb: Optional[float] = None) -> None:
         status = text

@@ -62,22 +62,6 @@ class BaseView(ABC):
         pass
 
     @abstractmethod
-    def winfo_width(self) -> int:
-        pass
-
-    @abstractmethod
-    def winfo_height(self) -> int:
-        pass
-
-    @abstractmethod
-    def winfo_x(self) -> int:
-        pass
-
-    @abstractmethod
-    def winfo_y(self) -> int:
-        pass
-
-    @abstractmethod
     def mainloop(self, n: int = 0, **kwargs) -> None:
         """Start the main event loop for the UI."""
         pass
