@@ -47,7 +47,17 @@ class DearPyGuiView(BaseView):
             )
         
         # Create viewport and window
-        dpg.create_viewport(title="Photo Sorter", width=self.width, height=self.height, x_pos=self.x, y_pos=self.y)
+        # Define icon path and create viewport with icons for title-bar and taskbar on Windows
+        icon_path = Path(__file__).parent.parent / "icon.ico"
+        dpg.create_viewport(
+            title="Photo Sorter",
+            width=self.width,
+            height=self.height,
+            x_pos=self.x,
+            y_pos=self.y,
+            small_icon=str(icon_path),
+            large_icon=str(icon_path)
+        )
         dpg.setup_dearpygui()
         
         # Main window: remove title bar and borders for a clean look
