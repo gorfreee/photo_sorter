@@ -347,6 +347,33 @@ class DearPyGuiView(BaseView):
             status += f" ({file_size_kb:.1f} KB)"
         dpg.set_value("status_text", status)
     
+    # Helper function to create a single category button with all handlers, theme, and tooltip
+    def _create_category_button(self, idx: int, cat: Dict[str, str], parent: str) -> None:
+        name = cat.get("name", "")
+        button_text = f"{idx + 1}: {name}" if name else f"{idx + 1}: [Empty]"
+        btn_id = dpg.generate_uuid()
+        btn = dpg.add_button(
+            label=button_text,
+            callback=lambda s, a, u: self._on_category_click(u),
+            user_data=idx,
+            width=self.CATEGORY_BUTTON_WIDTH,
+            tag=btn_id,
+            parent=str(parent)
+        )
+        dpg.bind_item_theme(btn, self._button_theme)
+        # Add tooltip if category has a name or path
+        if name or cat.get("path"):
+            with dpg.tooltip(btn_id):
+                dpg.add_text(cat.get("path", ""))
+        # Add right-click handler
+        with dpg.item_handler_registry() as handler_id:
+            dpg.add_item_clicked_handler(
+                button=dpg.mvMouseButton_Right,
+                callback=lambda s, a, u: self._on_category_right_click(u),
+                user_data=idx
+            )
+        dpg.bind_item_handler_registry(btn_id, handler_id)
+
     # Set up category buttons for image sorting
     def set_categories(self, categories: List[Dict[str, str]]) -> None:
         if dpg.does_item_exist(self.TAG_CATEGORIES_CONTAINER):
@@ -354,28 +381,13 @@ class DearPyGuiView(BaseView):
         self._category_callbacks.clear()
         # Arrange buttons in a 3x3 grid (3 rows, 3 buttons per row)
         for row in range(3):
-            with dpg.group(parent=self.TAG_CATEGORIES_CONTAINER, horizontal=True):
-                for col in range(3):
-                    idx = row * 3 + col
-                    cat = categories[idx] if idx < len(categories) else {"name": "", "path": ""}
-                    name = cat.get("name", "")
-                    button_text = f"{idx + 1}: {name}" if name else f"{idx + 1}: [Empty]"
-                    btn_id = dpg.generate_uuid()
-                    btn = dpg.add_button(
-                        label=button_text,
-                        callback=lambda s, a, u: self._on_category_click(u),
-                        user_data=idx,
-                        width=self.CATEGORY_BUTTON_WIDTH,
-                        tag=btn_id
-                    )
-                    dpg.bind_item_theme(btn, self._button_theme)
-                    with dpg.item_handler_registry() as handler_id:
-                        dpg.add_item_clicked_handler(
-                            button=dpg.mvMouseButton_Right,
-                            callback=lambda s, a, u: self._on_category_right_click(u),
-                            user_data=idx
-                        )
-                    dpg.bind_item_handler_registry(btn_id, handler_id)
+            group_id = str(dpg.generate_uuid())
+            with dpg.group(parent=self.TAG_CATEGORIES_CONTAINER, horizontal=True, tag=group_id):
+                pass  # Just to create the group and get its tag
+            for col in range(3):
+                idx = row * 3 + col
+                cat = categories[idx] if idx < len(categories) else {"name": "", "path": ""}
+                self._create_category_button(idx, cat, group_id)
 
     # Handle left-click on a category button
     def _on_category_click(self, idx: int) -> None:
