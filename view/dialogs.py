@@ -51,7 +51,7 @@ def configure_category(idx: int, initial: Dict[str, str], callback: Callable) ->
     """
     Show a modal dialog to configure a category, centered.
     Includes: name input, destination folder input with Browse button (native Windows folder dialog),
-    and OK, Cancel, Delete buttons.
+    and Save, Cancel, Delete buttons.
     """
     import dearpygui.dearpygui as dpg
     import uuid
@@ -124,7 +124,7 @@ def configure_category(idx: int, initial: Dict[str, str], callback: Callable) ->
             dpg.add_button(label="Browse...", callback=_on_browse)
         dpg.add_spacer(height=10)
         with dpg.group(horizontal=True):
-            dpg.add_button(label="OK", tag=ok_id, callback=_on_ok)
+            dpg.add_button(label="Save", tag=ok_id, callback=_on_ok)
             dpg.add_button(label="Cancel", callback=_on_cancel)
             dpg.add_button(label="Delete", callback=_on_delete)
     # Center after creation
