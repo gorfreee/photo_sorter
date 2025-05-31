@@ -15,6 +15,8 @@ import threading
 
 # Main DearPyGui-based view class for the photo sorter application
 class DearPyGuiView(BaseView):
+    _instance = None  # Singleton instance for global access
+
     # --- UI Tags and Layout Parameters ---
     TAG_MAIN_WINDOW = "main_window"
     TAG_MENU_BAR = "menu_bar"
@@ -41,6 +43,7 @@ class DearPyGuiView(BaseView):
     ABOUT_POPUP_HEIGHT = 150
 
     def __init__(self):
+        DearPyGuiView._instance = self  # Set singleton instance
         # --- Initialize Dear PyGui context and compute viewport position/size ---
         dpg.create_context()
         self.width = self.DEFAULT_WIDTH
@@ -148,6 +151,7 @@ class DearPyGuiView(BaseView):
         self._category_callbacks: Dict[int, Dict[str, Callable]] = {}
         self._folder_path: Optional[str] = None
         self._exit_handler: Optional[Callable] = None
+        self._modal_open = False  # Track if a modal dialog is open
 
     # --- Modular UI Construction ---
     def _build_menu_bar(self):
@@ -417,6 +421,9 @@ class DearPyGuiView(BaseView):
         self._on_next()
 
     def _handle_keyboard_category(self, idx: int) -> None:
+        # Only trigger shortcut if no modal is open
+        if getattr(self, "_modal_open", False):
+            return
         DearPyGuiView._show_button_feedback(self, idx)
         self._on_category_click(idx)
 
@@ -495,3 +502,7 @@ class DearPyGuiView(BaseView):
                     del self._feedback_timers[nav_key]
         self._feedback_timers[nav_key] = True
         threading.Timer(duration, restore_theme).start()
+
+    def set_modal_open(self, is_open: bool):
+        """Set the modal open state (True if a modal dialog is open)."""
+        self._modal_open = is_open

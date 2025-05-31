@@ -58,7 +58,15 @@ def configure_category(idx: int, initial: Dict[str, str], callback: Callable) ->
     import tkinter as tk
     from tkinter import filedialog
 
-    # Unique window/tag IDs to avoid alias conflicts
+    # Try to get the DearPyGuiView instance to set modal flag
+    view = None
+    try:
+        from view.dearpygui_view import DearPyGuiView
+        # Find the current view instance if possible (singleton pattern or global)
+        view = DearPyGuiView._instance if hasattr(DearPyGuiView, "_instance") else None
+    except ImportError:
+        pass
+
     window_id = f"category_config_{idx}_{uuid.uuid4()}"
     name_id = f"cat_name_{window_id}"
     folder_id = f"cat_folder_{window_id}"
@@ -71,16 +79,22 @@ def configure_category(idx: int, initial: Dict[str, str], callback: Callable) ->
             "action": "save",
             "idx": idx,
             "name": dpg.get_value(name_id),
-            "path": dpg.get_value(folder_id)  # Changed from 'folder' to 'path'
+            "path": dpg.get_value(folder_id)
         })
+        if view:
+            view.set_modal_open(False)
         dpg.delete_item(window_id)
 
     def _on_cancel():
         callback({"action": "cancel", "idx": idx})
+        if view:
+            view.set_modal_open(False)
         dpg.delete_item(window_id)
 
     def _on_delete():
         callback({"action": "delete", "idx": idx})
+        if view:
+            view.set_modal_open(False)
         dpg.delete_item(window_id)
 
     def _on_browse():
@@ -106,7 +120,7 @@ def configure_category(idx: int, initial: Dict[str, str], callback: Callable) ->
         dpg.add_spacer(height=5)
         dpg.add_text("Destination Folder:")
         with dpg.group(horizontal=True):
-            dpg.add_input_text(tag=folder_id, default_value=initial.get("path", ""), width=220, callback=lambda s,a,u: _update_ok_state())  # Use 'path' for initial value
+            dpg.add_input_text(tag=folder_id, default_value=initial.get("path", ""), width=220, callback=lambda s,a,u: _update_ok_state())
             dpg.add_button(label="Browse...", callback=_on_browse)
         dpg.add_spacer(height=10)
         with dpg.group(horizontal=True):
@@ -117,3 +131,6 @@ def configure_category(idx: int, initial: Dict[str, str], callback: Callable) ->
     _center_window(window_id, width, height)
     # Set initial OK state
     _update_ok_state()
+    # Set modal flag to True when dialog opens
+    if view:
+        view.set_modal_open(True)
