@@ -58,6 +58,7 @@ class PhotoSorterController:
             self.current_index = 0
             self.thumbnail_cache = {}  # Clear cache when new folder is selected
             # Show the first image immediately for instant feedback
+            self.view.set_selected_folder_path(str(folder))
             self.show_current()
             # Preload thumbnails for the remaining images in the background (excluding the first)
             def preload_thumbnails():
@@ -69,6 +70,12 @@ class PhotoSorterController:
                             self.thumbnail_cache[img_path] = None
             if len(self.images) > 1:
                 threading.Thread(target=preload_thumbnails, daemon=True).start()
+        elif self.current_folder is not None:
+            # If user cancels, keep showing the last selected folder
+            self.view.set_selected_folder_path(str(self.current_folder))
+        else:
+            # No folder ever selected
+            self.view.set_selected_folder_path("")
 
     def show_current(self):
         if not self.images:

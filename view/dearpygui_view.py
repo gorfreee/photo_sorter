@@ -137,9 +137,11 @@ class DearPyGuiView(BaseView):
 
     def _build_top_controls(self):
         with dpg.group(horizontal=True, tag=self.TAG_TOP_CONTROLS):
-            btn1 = dpg.add_button(label="Select Folder", callback=self._on_select_folder)
+            btn1 = dpg.add_button(label="Select Source Folder", callback=self._on_select_folder, tag="select_folder_button")
             dpg.bind_item_theme(btn1, self._button_theme)
-            # Removed reset button from here
+            # Add a text widget to display the selected folder path
+            dpg.add_spacer(width=10)
+            dpg.add_text("No folder selected", tag="selected_folder_path", wrap=400)
 
     def _build_status_text(self):
         dpg.add_text("Select a source folder", tag=self.TAG_STATUS_TEXT)
@@ -425,3 +427,21 @@ class DearPyGuiView(BaseView):
     def show_about_popup(self, sender=None, app_data=None, user_data=None):
         self._center_window(self.TAG_ABOUT_POPUP, 400, 160)
         dpg.configure_item(self.TAG_ABOUT_POPUP, show=True)
+
+    def update_select_folder_button(self, folder_selected: bool) -> None:
+        """Update the select folder button label based on selection state."""
+        label = "Change Source Folder" if folder_selected else "Select Source Folder"
+        if dpg.does_item_exist("select_folder_button"):
+            dpg.set_item_label("select_folder_button", label)
+
+    def set_selected_folder_path(self, folder_path: str) -> None:
+        """Update the displayed selected folder path next to the Select Folder button."""
+        if not folder_path:
+            dpg.set_value("selected_folder_path", "No folder selected")
+            self.update_select_folder_button(False)
+        else:
+            # Always display with OS-native separators
+            import os
+            folder_path = os.path.normpath(folder_path)
+            dpg.set_value("selected_folder_path", folder_path)
+            self.update_select_folder_button(True)

@@ -86,3 +86,8 @@ class BaseView(ABC):
     def mainloop(self, n: int = 0, **kwargs) -> None:
         """Start the main event loop for the UI."""
         pass
+
+    @abstractmethod
+    def set_selected_folder_path(self, folder_path: str) -> None:
+        """Update the displayed selected folder path next to the Select Folder button."""
+        pass
