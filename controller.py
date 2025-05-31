@@ -195,17 +195,20 @@ class PhotoSorterController:
             show_error(f"Error Moving Image: Could not move {img_path.name}: {e}")
     
     def reset_categories_and_source(self):
+        # Reset categories and last folder in config
         self.config["categories"] = []
         self.config["last_folder"] = ""
         save_config(self.config)
-        
+        # Reset current folder and image state
         self.current_folder = None
         self.images = []
         self.current_index = 0
-        
+        # Rebuild category buttons and clear image
         self.build_category_buttons()
         self.view.show_image(None)
         self.view.update_status("Select a source folder")
+        # Reset the selected folder path and update button label
+        self.view.set_selected_folder_path("")
 
     def on_close(self):
         """Handle window close event by saving window size and position, then closing the application."""
