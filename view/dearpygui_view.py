@@ -41,12 +41,37 @@ class DearPyGuiView(BaseView):
     ABOUT_POPUP_HEIGHT = 150
 
     def __init__(self):
-        # Initialize Dear PyGui context and window properties
+        # --- Initialize Dear PyGui context and compute viewport position/size ---
         dpg.create_context()
         self.width = self.DEFAULT_WIDTH
         self.height = self.DEFAULT_HEIGHT
 
-        # Create texture registry and image textures
+        # Compute centered position for the viewport on the primary monitor
+        try:
+            import tkinter as tk
+            root = tk.Tk()
+            root.withdraw()
+            screen_width = root.winfo_screenwidth()
+            screen_height = root.winfo_screenheight()
+            root.destroy()
+            x_pos = max((screen_width - self.width) // 2, 0)
+            y_pos = max((screen_height - self.height) // 2, 0)
+        except Exception:
+            x_pos, y_pos = 0, 0
+
+        icon_path = Path(__file__).parent.parent / "icon.ico"
+        # --- Store viewport parameters for later creation ---
+        self._viewport_params = {
+            "title": "Photo Sorter",
+            "width": self.width,
+            "height": self.height,
+            "small_icon": str(icon_path),
+            "large_icon": str(icon_path),
+            "x_pos": x_pos,
+            "y_pos": y_pos
+        }
+
+        # --- Build all UI widgets and windows, but do NOT create viewport yet ---
         with dpg.texture_registry() as self.texture_registry:
             dpg.add_dynamic_texture(
                 width=1,
@@ -78,23 +103,19 @@ class DearPyGuiView(BaseView):
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [30, 100, 180, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
-        # Store button IDs for visual feedback
         self._category_button_ids = dict()
         self._feedback_timers = dict()
-        # Store navigation button IDs for feedback
         self._nav_button_ids = dict()
 
         # --- Modern, Centered Layout ---
         with dpg.window(label="", tag=self.TAG_MAIN_WINDOW, no_close=True, no_collapse=True, no_move=True, no_title_bar=True, no_resize=True, width=self.width, height=self.height, pos=[0,0]):
             self._build_menu_bar()
-            # Add reset button at top right (absolute position, will be updated on resize)
-            btn_reset = dpg.add_button(label="Reset", tag=self.TAG_RESET_BUTTON, pos=[self.width-70, 30])  # Changed to 70px from right, 30px from top
+            btn_reset = dpg.add_button(label="Reset", tag=self.TAG_RESET_BUTTON, pos=[self.width-70, 30])
             dpg.bind_item_theme(btn_reset, self._button_theme)
             dpg.add_spacer(height=20)
-            # Center content horizontally using spacers
             with dpg.group(horizontal=True):
-                dpg.add_spacer(width=0, tag="left_spacer")  # Will be resized to center content
-                with dpg.group(tag="center_content"):  # Default is vertical stacking
+                dpg.add_spacer(width=0, tag="left_spacer")
+                with dpg.group(tag="center_content"):
                     self._build_top_controls()
                     dpg.add_spacer(height=10)
                     self._build_status_text()
@@ -102,52 +123,26 @@ class DearPyGuiView(BaseView):
                     self._build_image_area()
                     dpg.add_spacer(height=20)
                     self._build_categories_container()
-                dpg.add_spacer(width=0, tag="right_spacer")  # Will be resized to center content
+                dpg.add_spacer(width=0, tag="right_spacer")
             dpg.add_spacer(height=20)
         self._build_about_popup()
 
-        # Create and show the viewport with fixed size and icon
-        icon_path = Path(__file__).parent.parent / "icon.ico"
-        dpg.create_viewport(
-            title="Photo Sorter",
-            width=self.width,
-            height=self.height,
-            small_icon=str(icon_path),
-            large_icon=str(icon_path)
-        )
-
-        # Center the viewport on the primary monitor BEFORE showing it
-        try:
-            import tkinter as tk
-            root = tk.Tk()
-            root.withdraw()
-            screen_width = root.winfo_screenwidth()
-            screen_height = root.winfo_screenheight()
-            root.destroy()
-            x = max((screen_width - self.width) // 2, 0)
-            y = max((screen_height - self.height) // 2, 0)
-            dpg.set_viewport_pos([x, y])
-        except Exception:
-            pass
-
-        dpg.setup_dearpygui()
+        # --- Do NOT call dpg.create_viewport or dpg.setup_dearpygui here ---
 
         # Responsive centering on resize
         def _on_viewport_resize():
             vp_width = dpg.get_viewport_client_width()
-            content_width = 2 * 40 + self.IMAGE_DISPLAY_WIDTH + 120  # Estimate: side buttons + image + padding
+            content_width = 2 * 40 + self.IMAGE_DISPLAY_WIDTH + 120
             side_space = max((vp_width - content_width) // 2, 0)
             dpg.configure_item("left_spacer", width=side_space)
             dpg.configure_item("right_spacer", width=side_space)
             dpg.configure_item(self.TAG_MAIN_WINDOW, width=vp_width, height=dpg.get_viewport_client_height(), pos=[0, 0])
-            # Move reset button to top right, below menu bar
-            dpg.configure_item(self.TAG_RESET_BUTTON, pos=[vp_width-70, 30])  # Changed to 70px from right, 30px from top
+            dpg.configure_item(self.TAG_RESET_BUTTON, pos=[vp_width-70, 30])
         dpg.set_viewport_resize_callback(_on_viewport_resize)
-        _on_viewport_resize()  # Ensure layout is correct before showing viewport
+        # _on_viewport_resize() will be called after viewport is created
 
-        dpg.show_viewport()
+        # --- dpg.show_viewport() is only called in mainloop, after all setup ---
 
-        # Initialize callback and state dictionaries
         self._callbacks: Dict[str, Callable] = {}
         self._category_callbacks: Dict[int, Dict[str, Callable]] = {}
         self._folder_path: Optional[str] = None
@@ -307,6 +302,10 @@ class DearPyGuiView(BaseView):
     
     # Start the DearPyGui main loop
     def mainloop(self, n: int = 0, **kwargs) -> None:
+        # Create and setup viewport only after all UI is built
+        dpg.create_viewport(**self._viewport_params)
+        dpg.setup_dearpygui()
+        dpg.show_viewport()
         dpg.start_dearpygui()
     
     # Exit the application
