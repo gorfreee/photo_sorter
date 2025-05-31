@@ -8,6 +8,7 @@ from model import list_images, move_image, create_thumbnail
 from view.factory import create_view
 from view.dialogs import configure_category, show_error
 from typing import Callable
+import threading  # For background thumbnail preloading
 
 class PhotoSorterController:
     THUMBNAIL_PRELOAD_COUNT = 15  # Number of thumbnails to preload for instant navigation
@@ -56,13 +57,18 @@ class PhotoSorterController:
             self.images = list_images(self.current_folder)
             self.current_index = 0
             self.thumbnail_cache = {}  # Clear cache when new folder is selected
-            # Preload thumbnails for the first N images
-            for img_path in self.images[:self.THUMBNAIL_PRELOAD_COUNT]:
-                try:
-                    self.thumbnail_cache[img_path] = create_thumbnail(img_path)
-                except Exception:
-                    self.thumbnail_cache[img_path] = None
+            # Show the first image immediately for instant feedback
             self.show_current()
+            # Preload thumbnails for the remaining images in the background (excluding the first)
+            def preload_thumbnails():
+                for img_path in self.images[1:self.THUMBNAIL_PRELOAD_COUNT]:
+                    if img_path not in self.thumbnail_cache:
+                        try:
+                            self.thumbnail_cache[img_path] = create_thumbnail(img_path)
+                        except Exception:
+                            self.thumbnail_cache[img_path] = None
+            if len(self.images) > 1:
+                threading.Thread(target=preload_thumbnails, daemon=True).start()
 
     def show_current(self):
         if not self.images:
