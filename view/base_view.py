@@ -8,11 +8,6 @@ from typing import Optional, Union, Callable
 
 class BaseView(ABC):
     @abstractmethod
-    def geometry(self, new_geometry: Optional[str] = None) -> str:
-        """Set or get window geometry. Returns geometry string."""
-        pass
-
-    @abstractmethod
     def protocol(self, protocol_name: str, callback: Optional[Callable] = None) -> None:
         """Register protocol handler."""
         pass

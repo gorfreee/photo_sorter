@@ -23,16 +23,7 @@ class PhotoSorterController:
         self.thumbnail_cache = {}  # Cache for thumbnails
         # Instantiate view using factory for pluggable UI backends
         self.view = create_view(self.config)
-        # TODO: In the future, replace MainWindow with BaseView implementation (e.g., DearPyGuiView)
-        # self.view = create_view()  # Factory to choose view by configuration
-        # Apply saved window size and position
-        width, height = self.config.get("window_size", [800, 600])
-        x, y = self.config.get("window_position", [None, None])
-        if x is not None and y is not None:
-            self.view.geometry(f"{width}x{height}+{x}+{y}")
-        else:
-            self.view.geometry(f"{width}x{height}")
-        # Save window size and position on close
+        # Remove all window geometry logic; window size/position is now fixed in the view
         self.view.protocol("WM_DELETE_WINDOW", self.on_close)
         self.view.on_select_folder(self.select_folder)
         self.view.on_next(self.next_image)
@@ -211,15 +202,5 @@ class PhotoSorterController:
         self.view.set_selected_folder_path("")
 
     def on_close(self):
-        """Handle window close event by saving window size and position, then closing the application."""
-        # Get current window size and position
-        width = self.view.winfo_width()
-        height = self.view.winfo_height()
-        x = self.view.winfo_x()
-        y = self.view.winfo_y()
-        # Save to config
-        self.config["window_size"] = [width, height]
-        self.config["window_position"] = [x, y]
-        save_config(self.config)
-        # self.view.destroy() # This line was causing recursion, removed.
-        # The view's actual destruction will be handled by the UI library's shutdown process.
+        """Handle window close event by quitting the application."""
+        self.view.quit()

@@ -25,7 +25,7 @@ def load_config() -> dict:
             cfg = json.load(f)
         cfg.setdefault("ui_backend", "dearpygui")
         return cfg
-    return {"categories": [], "last_folder": "", "window_size": [800, 600], "ui_backend": "dearpygui"}
+    return {"categories": [], "last_folder": "", "ui_backend": "dearpygui"}
 
 # --- Configuration Save Function ---
 # Saves the provided configuration dictionary to the JSON file, creating it if necessary.

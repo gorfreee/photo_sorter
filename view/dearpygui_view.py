@@ -1,7 +1,7 @@
 """
 DearPyGui implementation of the photo sorter UI.
 
-This file defines the DearPyGuiView class, which provides a graphical user interface for the photo sorter application using the Dear PyGui library. It implements the BaseView interface, allowing the UI backend to be swapped if needed. The class manages the main application window, image display, category buttons, status updates, and user interactions such as folder selection, navigation, and category assignment. It also handles window geometry, keyboard shortcuts, and resource cleanup. The design aims for a clean, modern look and a responsive user experience.
+This file defines the DearPyGuiView class, which provides a graphical user interface for the photo sorter application using the Dear PyGui library. It implements the BaseView interface, allowing the UI backend to be swapped if needed. The class manages the main application window, image display, category buttons, status updates, and user interactions such as folder selection, navigation, and category assignment. The design aims for a clean, modern look and a responsive user experience.
 """
 from pathlib import Path
 import os
@@ -32,10 +32,8 @@ class DearPyGuiView(BaseView):
     TAG_GITHUB_LINK = "github_link"
 
     # Layout parameters
-    DEFAULT_WIDTH = 800
-    DEFAULT_HEIGHT = 600
-    DEFAULT_X = 100
-    DEFAULT_Y = 100
+    DEFAULT_WIDTH = 900
+    DEFAULT_HEIGHT = 650
     IMAGE_DISPLAY_WIDTH = 400
     IMAGE_DISPLAY_HEIGHT = 300
     CATEGORY_BUTTON_WIDTH = 200
@@ -47,8 +45,22 @@ class DearPyGuiView(BaseView):
         dpg.create_context()
         self.width = self.DEFAULT_WIDTH
         self.height = self.DEFAULT_HEIGHT
-        self.x = self.DEFAULT_X
-        self.y = self.DEFAULT_Y
+
+        # Create texture registry and image textures
+        with dpg.texture_registry() as self.texture_registry:
+            dpg.add_dynamic_texture(
+                width=1,
+                height=1,
+                default_value=[0.0, 0.0, 0.0, 0.0],
+                tag=self.TAG_PLACEHOLDER_TEXTURE
+            )
+            initial_texture_data = [0.0] * (self.IMAGE_DISPLAY_WIDTH * self.IMAGE_DISPLAY_HEIGHT * 4)
+            dpg.add_dynamic_texture(
+                width=self.IMAGE_DISPLAY_WIDTH,
+                height=self.IMAGE_DISPLAY_HEIGHT,
+                default_value=initial_texture_data,
+                tag=self.TAG_IMAGE_TEXTURE
+            )
 
         # --- Modern Button Theme ---
         with dpg.theme() as self._button_theme:
@@ -72,34 +84,6 @@ class DearPyGuiView(BaseView):
         # Store navigation button IDs for feedback
         self._nav_button_ids = dict()
 
-        # Create texture registry and image textures
-        with dpg.texture_registry() as self.texture_registry:
-            dpg.add_dynamic_texture(
-                width=1,
-                height=1,
-                default_value=[0.0, 0.0, 0.0, 0.0],
-                tag=self.TAG_PLACEHOLDER_TEXTURE
-            )
-            initial_texture_data = [0.0] * (self.IMAGE_DISPLAY_WIDTH * self.IMAGE_DISPLAY_HEIGHT * 4)
-            dpg.add_dynamic_texture(
-                width=self.IMAGE_DISPLAY_WIDTH,
-                height=self.IMAGE_DISPLAY_HEIGHT,
-                default_value=initial_texture_data,
-                tag=self.TAG_IMAGE_TEXTURE
-            )
-
-        icon_path = Path(__file__).parent.parent / "icon.ico"
-        dpg.create_viewport(
-            title="Photo Sorter",
-            width=self.width,
-            height=self.height,
-            x_pos=self.x,
-            y_pos=self.y,
-            small_icon=str(icon_path),
-            large_icon=str(icon_path)
-        )
-        dpg.setup_dearpygui()
-
         # --- Modern, Centered Layout ---
         with dpg.window(label="", tag=self.TAG_MAIN_WINDOW, no_close=True, no_collapse=True, no_move=True, no_title_bar=True, no_resize=True, width=self.width, height=self.height, pos=[0,0]):
             self._build_menu_bar()
@@ -122,13 +106,31 @@ class DearPyGuiView(BaseView):
             dpg.add_spacer(height=20)
         self._build_about_popup()
 
-        # Initialize callback and state dictionaries
-        self._callbacks: Dict[str, Callable] = {}
-        self._category_callbacks: Dict[int, Dict[str, Callable]] = {}
-        self._folder_path: Optional[str] = None
-        self._exit_handler: Optional[Callable] = None
-        
+        # Create and show the viewport with fixed size and icon
+        icon_path = Path(__file__).parent.parent / "icon.ico"
+        dpg.create_viewport(
+            title="Photo Sorter",
+            width=self.width,
+            height=self.height,
+            small_icon=str(icon_path),
+            large_icon=str(icon_path)
+        )
+        dpg.setup_dearpygui()
         dpg.show_viewport()
+
+        # Center the viewport on the primary monitor
+        try:
+            import tkinter as tk
+            root = tk.Tk()
+            root.withdraw()
+            screen_width = root.winfo_screenwidth()
+            screen_height = root.winfo_screenheight()
+            root.destroy()
+            x = max((screen_width - self.width) // 2, 0)
+            y = max((screen_height - self.height) // 2, 0)
+            dpg.set_viewport_pos([x, y])
+        except Exception:
+            pass
 
         # Responsive centering on resize
         def _on_viewport_resize():
@@ -142,6 +144,12 @@ class DearPyGuiView(BaseView):
             dpg.configure_item(self.TAG_RESET_BUTTON, pos=[vp_width-70, 30])  # Changed to 70px from right, 30px from top
         dpg.set_viewport_resize_callback(_on_viewport_resize)
         _on_viewport_resize()
+
+        # Initialize callback and state dictionaries
+        self._callbacks: Dict[str, Callable] = {}
+        self._category_callbacks: Dict[int, Dict[str, Callable]] = {}
+        self._folder_path: Optional[str] = None
+        self._exit_handler: Optional[Callable] = None
 
     # --- Modular UI Construction ---
     def _build_menu_bar(self):
@@ -221,42 +229,6 @@ class DearPyGuiView(BaseView):
     def _on_prev(self) -> None:
         if self._callbacks.get("prev"):
             self._callbacks["prev"]()
-
-    # Get or set the window geometry (size and position)
-    def geometry(self, new_geometry: Optional[str] = None) -> str:
-        if new_geometry:
-            try:
-                parts = new_geometry.replace(" ", "").replace("+", "x+").split("+")
-                parsed_w, parsed_h = self.width, self.height
-                parsed_x, parsed_y = self.x, self.y
-                if parts and parts[0]:
-                    size_parts = parts[0].split("x")
-                    if len(size_parts) == 2:
-                        w_str, h_str = size_parts
-                        if w_str: parsed_w = int(w_str)
-                        if h_str: parsed_h = int(h_str)
-                if len(parts) > 1 and parts[1]:
-                    if parts[1]: parsed_x = int(parts[1])
-                if len(parts) > 2 and parts[2]:
-                    if parts[2]: parsed_y = int(parts[2])
-                self.width, self.height = parsed_w, parsed_h
-                self.x, self.y = parsed_x, parsed_y
-            except ValueError:
-                print(f"Warning: Could not parse geometry string '{new_geometry}'. Using current values.")
-            current_x, current_y = dpg.get_viewport_pos() if dpg.is_dearpygui_running() else (100, 100)
-            self.x = self.x if self.x is not None else current_x
-            self.y = self.y if self.y is not None else current_y
-            self.width = max(100, self.width if self.width is not None else 800)
-            self.height = max(100, self.height if self.height is not None else 600)
-            if dpg.is_dearpygui_running():
-                dpg.set_viewport_pos([self.x, self.y])
-                dpg.set_viewport_width(self.width)
-                dpg.set_viewport_height(self.height)
-                if dpg.does_item_exist("main_window"):
-                    dpg.configure_item("main_window", width=self.width, height=self.height)
-            else:
-                pass
-        return f"{self.width}x{self.height}+{self.x}+{self.y}"
 
     # Register a protocol callback (e.g., for window close events)
     def protocol(self, protocol_name: str, callback: Optional[Callable] = None) -> None:
