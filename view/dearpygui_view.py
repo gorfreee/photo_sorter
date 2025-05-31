@@ -13,36 +13,57 @@ from typing import Optional, Callable, Union, Any, Dict, List
 
 # Main DearPyGui-based view class for the photo sorter application
 class DearPyGuiView(BaseView):
+    # --- UI Tags and Layout Parameters ---
+    TAG_MAIN_WINDOW = "main_window"
+    TAG_MENU_BAR = "menu_bar"
+    TAG_TOP_CONTROLS = "top_controls"
+    TAG_RESET_BUTTON = "reset_button"
+    TAG_STATUS_TEXT = "status_text"
+    TAG_IMAGE_DISPLAY = "image_display"
+    TAG_IMAGE_TEXTURE = "image_texture"
+    TAG_PLACEHOLDER_TEXTURE = "placeholder_texture"
+    TAG_IMAGE_AREA = "image_area_group"
+    TAG_PREV_BUTTON = "prev_button"
+    TAG_NEXT_BUTTON = "next_button"
+    TAG_CATEGORIES_CONTAINER = "categories_container"
+    TAG_ABOUT_POPUP = "about_popup"
+    TAG_GITHUB_LINK = "github_link"
+
+    # Layout parameters
+    DEFAULT_WIDTH = 800
+    DEFAULT_HEIGHT = 600
+    DEFAULT_X = 100
+    DEFAULT_Y = 100
+    IMAGE_DISPLAY_WIDTH = 400
+    IMAGE_DISPLAY_HEIGHT = 300
+    CATEGORY_BUTTON_WIDTH = 200
+    ABOUT_POPUP_WIDTH = 360
+    ABOUT_POPUP_HEIGHT = 150
+
     def __init__(self):
         # Initialize Dear PyGui context and window properties
         dpg.create_context()
-        self.width = 800
-        self.height = 600
-        self.x = 100
-        self.y = 100
+        self.width = self.DEFAULT_WIDTH
+        self.height = self.DEFAULT_HEIGHT
+        self.x = self.DEFAULT_X
+        self.y = self.DEFAULT_Y
 
-        # Set up fixed dimensions for the image display area
-        self.image_display_width = 400
-        self.image_display_height = 300
-        
-        # Create texture registry and image textures for displaying images
+        # Create texture registry and image textures
         with dpg.texture_registry() as self.texture_registry:
-            self.placeholder_texture_tag = "placeholder_texture"
             dpg.add_dynamic_texture(
                 width=1,
                 height=1,
                 default_value=[0.0, 0.0, 0.0, 0.0],
-                tag=self.placeholder_texture_tag
+                tag=self.TAG_PLACEHOLDER_TEXTURE
             )
-            self.image_texture_tag = "image_texture"
-            initial_texture_data = [0.0] * (self.image_display_width * self.image_display_height * 4)
+            initial_texture_data = [0.0] * (self.IMAGE_DISPLAY_WIDTH * self.IMAGE_DISPLAY_HEIGHT * 4)
             dpg.add_dynamic_texture(
-                width=self.image_display_width,
-                height=self.image_display_height,
+                width=self.IMAGE_DISPLAY_WIDTH,
+                height=self.IMAGE_DISPLAY_HEIGHT,
                 default_value=initial_texture_data,
-                tag=self.image_texture_tag
+                tag=self.TAG_IMAGE_TEXTURE
             )
-        
+
         # Create the main application viewport and window
         icon_path = Path(__file__).parent.parent / "icon.ico"
         dpg.create_viewport(
@@ -55,61 +76,15 @@ class DearPyGuiView(BaseView):
             large_icon=str(icon_path)
         )
         dpg.setup_dearpygui()
-        
-        # Build the main window layout and UI controls
-        with dpg.window(label="", tag="main_window", no_close=True, no_collapse=True, no_move=True, no_title_bar=True, no_resize=True, width=self.width, height=self.height, pos=[0,0]):
-            # Add menu bar with About dialog
-            with dpg.menu_bar():
-                with dpg.menu(label="Menu"):
-                    dpg.add_menu_item(label="About", callback=self.show_about_popup)
-            # Add top controls for folder selection and reset
-            dpg.add_group(horizontal=True, tag="top_controls")
-            dpg.add_button(label="Select Folder", callback=self._on_select_folder, parent="top_controls")
-            dpg.add_button(label="Reset", tag="reset_button", parent="top_controls")
-            
-            # Add status text for user feedback
-            dpg.add_text("Select a source folder", tag="status_text")
-            
-            # Add image display area with navigation buttons
-            with dpg.group(horizontal=True):
-                dpg.add_button(label="<", callback=self._on_prev)
-                dpg.add_image(texture_tag=self.image_texture_tag, tag="image_display", width=self.image_display_width, height=self.image_display_height)
-                dpg.add_button(label=">", callback=self._on_next)
-            
-            # Add container for category buttons
-            dpg.add_group(tag="categories_container")
-        
-        # Create the About popup window (hidden by default)
-        with dpg.window(
-            label="About",
-            modal=True,
-            show=False,
-            tag="about_popup",
-            no_close=True,
-            no_collapse=True,
-            no_move=True,
-            width=360,
-            height=150
-        ):
-            dpg.add_text("Photo Sorter")
-            dpg.add_spacer(height=2)
-            with dpg.group(horizontal=True):
-                dpg.add_text("GitHub:")
-                dpg.add_text(
-                    "https://github.com/gorfreee/photo_sorter",
-                    color=[0, 102, 204],
-                    bullet=False,
-                    tag="github_link",
-                    show=True
-                )
-            dpg.add_spacer(height=2)
-            dpg.add_text("License: MIT License")
-            dpg.add_spacer(height=10)
-            with dpg.group(horizontal=True):
-                dpg.add_spacer(width=60)
-                dpg.add_button(label="Open GitHub", width=120, callback=lambda: os.system('start https://github.com/gorfreee/photo_sorter'))
-                dpg.add_spacer(width=10)
-                dpg.add_button(label="Close", width=80, callback=lambda: dpg.configure_item("about_popup", show=False))
+
+        # Build UI modularly
+        with dpg.window(label="", tag=self.TAG_MAIN_WINDOW, no_close=True, no_collapse=True, no_move=True, no_title_bar=True, no_resize=True, width=self.width, height=self.height, pos=[0,0]):
+            self._build_menu_bar()
+            self._build_top_controls()
+            self._build_status_text()
+            self._build_image_area()
+            self._build_categories_container()
+        self._build_about_popup()
 
         # Initialize callback and state dictionaries
         self._callbacks: Dict[str, Callable] = {}
@@ -126,9 +101,64 @@ class DearPyGuiView(BaseView):
             vp_height = dpg.get_viewport_client_height()
             self.width = vp_width
             self.height = vp_height
-            dpg.configure_item("main_window", width=vp_width, height=vp_height, pos=[0, 0])
+            dpg.configure_item(self.TAG_MAIN_WINDOW, width=vp_width, height=vp_height, pos=[0, 0])
         dpg.set_viewport_resize_callback(_on_viewport_resize)
         _on_viewport_resize()
+
+    # --- Modular UI Construction ---
+    def _build_menu_bar(self):
+        with dpg.menu_bar(tag=self.TAG_MENU_BAR):
+            with dpg.menu(label="Menu"):
+                dpg.add_menu_item(label="About", callback=self.show_about_popup)
+
+    def _build_top_controls(self):
+        dpg.add_group(horizontal=True, tag=self.TAG_TOP_CONTROLS)
+        dpg.add_button(label="Select Folder", callback=self._on_select_folder, parent=self.TAG_TOP_CONTROLS)
+        dpg.add_button(label="Reset", tag=self.TAG_RESET_BUTTON, parent=self.TAG_TOP_CONTROLS)
+
+    def _build_status_text(self):
+        dpg.add_text("Select a source folder", tag=self.TAG_STATUS_TEXT)
+
+    def _build_image_area(self):
+        with dpg.group(horizontal=True, tag=self.TAG_IMAGE_AREA):
+            dpg.add_button(label="<", callback=self._on_prev, tag=self.TAG_PREV_BUTTON)
+            dpg.add_image(texture_tag=self.TAG_IMAGE_TEXTURE, tag=self.TAG_IMAGE_DISPLAY, width=self.IMAGE_DISPLAY_WIDTH, height=self.IMAGE_DISPLAY_HEIGHT)
+            dpg.add_button(label=">", callback=self._on_next, tag=self.TAG_NEXT_BUTTON)
+
+    def _build_categories_container(self):
+        dpg.add_group(tag=self.TAG_CATEGORIES_CONTAINER)
+
+    def _build_about_popup(self):
+        with dpg.window(
+            label="About",
+            modal=True,
+            show=False,
+            tag=self.TAG_ABOUT_POPUP,
+            no_close=True,
+            no_collapse=True,
+            no_move=True,
+            width=self.ABOUT_POPUP_WIDTH,
+            height=self.ABOUT_POPUP_HEIGHT
+        ):
+            dpg.add_text("Photo Sorter")
+            dpg.add_spacer(height=2)
+            with dpg.group(horizontal=True):
+                dpg.add_text("GitHub:")
+                dpg.add_text(
+                    "https://github.com/gorfreee/photo_sorter",
+                    color=[0, 102, 204],
+                    bullet=False,
+                    tag=self.TAG_GITHUB_LINK,
+                    show=True
+                )
+            dpg.add_spacer(height=2)
+            dpg.add_text("License: MIT License")
+            dpg.add_spacer(height=10)
+            with dpg.group(horizontal=True):
+                dpg.add_spacer(width=60)
+                dpg.add_button(label="Open GitHub", width=120, callback=lambda: os.system('start https://github.com/gorfreee/photo_sorter'))
+                dpg.add_spacer(width=10)
+                dpg.add_button(label="Close", width=80, callback=lambda: dpg.configure_item(self.TAG_ABOUT_POPUP, show=False))
 
     # Internal event handler for folder selection button
     def _on_select_folder(self) -> None:
@@ -220,10 +250,10 @@ class DearPyGuiView(BaseView):
 
     # Display a PIL image in the DearPyGui window
     def show_image(self, photo: Optional[Image.Image]) -> None:
-        FIXED_WIDTH, FIXED_HEIGHT = self.image_display_width, self.image_display_height
+        FIXED_WIDTH, FIXED_HEIGHT = self.IMAGE_DISPLAY_WIDTH, self.IMAGE_DISPLAY_HEIGHT
         if photo is None:
-            if dpg.does_item_exist("image_display"):
-                dpg.configure_item("image_display", texture_tag=self.placeholder_texture_tag, width=FIXED_WIDTH, height=FIXED_HEIGHT)
+            if dpg.does_item_exist(self.TAG_IMAGE_DISPLAY):
+                dpg.configure_item(self.TAG_IMAGE_DISPLAY, texture_tag=self.TAG_PLACEHOLDER_TEXTURE, width=FIXED_WIDTH, height=FIXED_HEIGHT)
             return
         if photo.mode != "RGBA":
             photo = photo.convert("RGBA")
@@ -240,13 +270,13 @@ class DearPyGuiView(BaseView):
         if not img_array.flags['C_CONTIGUOUS']:
             img_array = np.ascontiguousarray(img_array)
         img_list = img_array.flatten().tolist()
-        dpg.set_value(self.image_texture_tag, img_list)
-        if dpg.does_item_exist("image_display"):
-            dpg.configure_item("image_display", 
-                               texture_tag=self.image_texture_tag, 
+        dpg.set_value(self.TAG_IMAGE_TEXTURE, img_list)
+        if dpg.does_item_exist(self.TAG_IMAGE_DISPLAY):
+            dpg.configure_item(self.TAG_IMAGE_DISPLAY, 
+                               texture_tag=self.TAG_IMAGE_TEXTURE, 
                                width=FIXED_WIDTH, 
                                height=FIXED_HEIGHT)
-        dpg.set_item_label("image_display", f"{FIXED_WIDTH}x{FIXED_HEIGHT}")
+        dpg.set_item_label(self.TAG_IMAGE_DISPLAY, f"{FIXED_WIDTH}x{FIXED_HEIGHT}")
     
     # Clean up DearPyGui resources and close the window
     def destroy(self) -> None:
@@ -288,20 +318,20 @@ class DearPyGuiView(BaseView):
     
     # Set up category buttons for image sorting
     def set_categories(self, categories: List[Dict[str, str]]) -> None:
-        if dpg.does_item_exist("categories_container"):
-            dpg.delete_item("categories_container", children_only=True)
+        if dpg.does_item_exist(self.TAG_CATEGORIES_CONTAINER):
+            dpg.delete_item(self.TAG_CATEGORIES_CONTAINER, children_only=True)
         self._category_callbacks.clear()
         for idx in range(9):
             cat = categories[idx] if idx < len(categories) else {"name": "", "path": ""}
             name = cat.get("name", "")
             button_text = f"{idx + 1}: {name}" if name else f"{idx + 1}: [Empty]"
-            with dpg.group(parent="categories_container", horizontal=True):
+            with dpg.group(parent=self.TAG_CATEGORIES_CONTAINER, horizontal=True):
                 btn_id = dpg.generate_uuid()
                 dpg.add_button(
                     label=button_text,
                     callback=lambda s, a, u: self._on_category_click(u),
                     user_data=idx,
-                    width=200,
+                    width=self.CATEGORY_BUTTON_WIDTH,
                     tag=btn_id
                 )
                 with dpg.item_handler_registry() as handler_id:
@@ -348,7 +378,7 @@ class DearPyGuiView(BaseView):
     def _on_viewport_resize(self) -> None:
         self.width = dpg.get_viewport_width()
         self.height = dpg.get_viewport_height()
-        dpg.configure_item("main_window", width=self.width, height=self.height)
+        dpg.configure_item(self.TAG_MAIN_WINDOW, width=self.width, height=self.height)
 
     # Utility to center a DearPyGui window in the viewport
     def _center_window(self, window_id: str, width: int, height: int) -> None:
@@ -360,5 +390,5 @@ class DearPyGuiView(BaseView):
 
     # Show the About popup window, centered in the viewport
     def show_about_popup(self, sender=None, app_data=None, user_data=None):
-        self._center_window("about_popup", 400, 160)
-        dpg.configure_item("about_popup", show=True)
+        self._center_window(self.TAG_ABOUT_POPUP, 400, 160)
+        dpg.configure_item(self.TAG_ABOUT_POPUP, show=True)
