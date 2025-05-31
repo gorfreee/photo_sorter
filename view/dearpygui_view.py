@@ -4,7 +4,8 @@ DearPyGui implementation of the photo sorter UI.
 This file defines the DearPyGuiView class, which provides a graphical user interface for the photo sorter application using the Dear PyGui library. It implements the BaseView interface, allowing the UI backend to be swapped if needed. The class manages the main application window, image display, category buttons, status updates, and user interactions such as folder selection, navigation, and category assignment. It also handles window geometry, keyboard shortcuts, and resource cleanup. The design aims for a clean, modern look and a responsive user experience.
 """
 from pathlib import Path
-import os  # Required for os.system in Open GitHub button
+import os
+import webbrowser
 import dearpygui.dearpygui as dpg
 from view.base_view import BaseView
 import numpy as np
@@ -184,7 +185,7 @@ class DearPyGuiView(BaseView):
             dpg.add_spacer(height=10)
             with dpg.group(horizontal=True):
                 dpg.add_spacer(width=60)
-                dpg.add_button(label="Open GitHub", width=120, callback=lambda: os.system('start https://github.com/gorfreee/photo_sorter'))
+                dpg.add_button(label="Open GitHub", width=120, callback=lambda: webbrowser.open('https://github.com/gorfreee/photo_sorter'))
                 dpg.add_spacer(width=10)
                 dpg.add_button(label="Close", width=80, callback=lambda: dpg.configure_item(self.TAG_ABOUT_POPUP, show=False))
 
