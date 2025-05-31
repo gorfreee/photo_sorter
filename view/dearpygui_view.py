@@ -1,7 +1,14 @@
 """
-DearPyGui implementation of the photo sorter UI.
+DearPyGuiView: DearPyGui-based UI for Photo Sorter
 
-This file defines the DearPyGuiView class, which provides a graphical user interface for the photo sorter application using the Dear PyGui library. It implements the BaseView interface, allowing the UI backend to be swapped if needed. The class manages the main application window, image display, category buttons, status updates, and user interactions such as folder selection, navigation, and category assignment. The design aims for a clean, modern look and a responsive user experience.
+This file implements the DearPyGuiView class, which provides a modern, responsive graphical user interface for the photo sorter application using the Dear PyGui library. The class is designed to be modular and maintainable, and implements the BaseView interface so that the UI backend can be swapped if needed. It manages the main application window, image display, category buttons, status updates, and user interactions such as folder selection, navigation, and category assignment. The UI aims for a clean, modern look and a smooth user experience.
+
+Key responsibilities:
+- Build and manage all DearPyGui widgets and windows for the photo sorter app
+- Handle user interactions (button clicks, keyboard shortcuts, folder selection, etc.)
+- Display images and update UI elements in response to user actions
+- Provide visual feedback for navigation and category selection
+- Support modular callbacks for controller integration
 """
 from pathlib import Path
 import os
@@ -33,7 +40,7 @@ class DearPyGuiView(BaseView):
     TAG_ABOUT_POPUP = "about_popup"
     TAG_GITHUB_LINK = "github_link"
 
-    # Layout parameters
+    # Layout parameters for window and widgets
     DEFAULT_WIDTH = 900
     DEFAULT_HEIGHT = 650
     IMAGE_DISPLAY_WIDTH = 400
@@ -43,8 +50,8 @@ class DearPyGuiView(BaseView):
     ABOUT_POPUP_HEIGHT = 150
 
     def __init__(self):
-        DearPyGuiView._instance = self  # Set singleton instance
         # --- Initialize Dear PyGui context and compute viewport position/size ---
+        DearPyGuiView._instance = self  # Set singleton instance
         dpg.create_context()
         self.width = self.DEFAULT_WIDTH
         self.height = self.DEFAULT_HEIGHT
@@ -63,7 +70,7 @@ class DearPyGuiView(BaseView):
             x_pos, y_pos = 0, 0
 
         icon_path = Path(__file__).parent.parent / "icon.ico"
-        # --- Store viewport parameters for later creation ---
+        # Store viewport parameters for later creation
         self._viewport_params = {
             "title": "Photo Sorter",
             "width": self.width,
@@ -94,7 +101,7 @@ class DearPyGuiView(BaseView):
                 tag=self.TAG_IMAGE_TEXTURE
             )
 
-        # --- Modern Button Theme ---
+        # --- Define button themes for modern look and visual feedback ---
         with dpg.theme() as self._button_theme:
             with dpg.theme_component(dpg.mvButton):
                 dpg.add_theme_color(dpg.mvThemeCol_Button, [40, 120, 220, 255])
@@ -102,7 +109,6 @@ class DearPyGuiView(BaseView):
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [30, 100, 180, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
-        # --- Active Button Theme for Visual Feedback ---
         with dpg.theme() as self._button_active_theme:
             with dpg.theme_component(dpg.mvButton):
                 dpg.add_theme_color(dpg.mvThemeCol_Button, [30, 100, 180, 255])
@@ -114,7 +120,7 @@ class DearPyGuiView(BaseView):
         self._feedback_timers = dict()
         self._nav_button_ids = dict()
 
-        # --- Modern, Centered Layout ---
+        # --- Build main window and layout ---
         with dpg.window(label="", tag=self.TAG_MAIN_WINDOW, no_close=True, no_collapse=True, no_move=True, no_title_bar=True, no_resize=True, width=self.width, height=self.height, pos=[0,0]):
             self._build_menu_bar()
             btn_reset = dpg.add_button(label="Reset", tag=self.TAG_RESET_BUTTON, pos=[self.width-70, 30])
@@ -134,7 +140,7 @@ class DearPyGuiView(BaseView):
             dpg.add_spacer(height=20)
         self._build_about_popup()
 
-        # Responsive centering on resize
+        # --- Responsive centering on viewport resize ---
         def _on_viewport_resize():
             vp_width = dpg.get_viewport_client_width()
             content_width = 2 * 40 + self.IMAGE_DISPLAY_WIDTH + 120
@@ -145,32 +151,34 @@ class DearPyGuiView(BaseView):
             dpg.configure_item(self.TAG_RESET_BUTTON, pos=[vp_width-70, 30])
         dpg.set_viewport_resize_callback(_on_viewport_resize)
 
-        # (moved to mainloop to show after everything is built)
-
+        # --- Initialize callback and state dictionaries ---
         self._callbacks: Dict[str, Callable] = {}
         self._category_callbacks: Dict[int, Dict[str, Callable]] = {}
         self._folder_path: Optional[str] = None
         self._exit_handler: Optional[Callable] = None
         self._modal_open = False  # Track if a modal dialog is open
 
-    # --- Modular UI Construction ---
+    # --- UI Construction Methods ---
     def _build_menu_bar(self):
+        """Build the menu bar with About menu item."""
         with dpg.menu_bar(tag=self.TAG_MENU_BAR):
             with dpg.menu(label="Menu"):
                 dpg.add_menu_item(label="About", callback=self.show_about_popup)
 
     def _build_top_controls(self):
+        """Build the top controls: select folder button and folder path display."""
         with dpg.group(horizontal=True, tag=self.TAG_TOP_CONTROLS):
             btn1 = dpg.add_button(label="Select Source Folder", callback=self._on_select_folder, tag="select_folder_button")
             dpg.bind_item_theme(btn1, self._button_theme)
-            # Add a text widget to display the selected folder path
             dpg.add_spacer(width=10)
             dpg.add_text("No folder selected", tag="selected_folder_path", wrap=400)
 
     def _build_status_text(self):
+        """Build the status text area."""
         dpg.add_text("Select a source folder", tag=self.TAG_STATUS_TEXT)
 
     def _build_image_area(self):
+        """Build the image display area with navigation buttons."""
         with dpg.group(horizontal=True, tag=self.TAG_IMAGE_AREA):
             btn_prev = dpg.add_button(label="<", callback=self._on_prev, tag=self.TAG_PREV_BUTTON, width=40, height=self.IMAGE_DISPLAY_HEIGHT)
             dpg.bind_item_theme(btn_prev, self._button_theme)
@@ -183,9 +191,11 @@ class DearPyGuiView(BaseView):
             self._nav_button_ids['next'] = btn_next
 
     def _build_categories_container(self):
+        """Build the container for category buttons."""
         dpg.add_group(tag=self.TAG_CATEGORIES_CONTAINER)
 
     def _build_about_popup(self):
+        """Build the About popup window."""
         with dpg.window(
             label="About",
             modal=True,
@@ -218,50 +228,52 @@ class DearPyGuiView(BaseView):
                 dpg.add_spacer(width=10)
                 dpg.add_button(label="Close", width=80, callback=lambda: dpg.configure_item(self.TAG_ABOUT_POPUP, show=False))
 
-    # Internal event handler for folder selection button
+    # --- Event Handlers and Callback Registration ---
     def _on_select_folder(self) -> None:
+        """Internal event handler for folder selection button."""
         if self._callbacks.get("select_folder"):
             self._callbacks["select_folder"]()
 
-    # Internal event handler for next image button
     def _on_next(self) -> None:
+        """Internal event handler for next image button."""
         if self._callbacks.get("next"):
             self._callbacks["next"]()
 
-    # Internal event handler for previous image button
     def _on_prev(self) -> None:
+        """Internal event handler for previous image button."""
         if self._callbacks.get("prev"):
             self._callbacks["prev"]()
 
-    # Register a protocol callback (e.g., for window close events)
     def protocol(self, protocol_name: str, callback: Optional[Callable] = None) -> None:
+        """Register a protocol callback (e.g., for window close events)."""
         if protocol_name == "WM_DELETE_WINDOW" and callback:
             self._callbacks["close"] = callback
 
-    # Register callback for folder selection
     def on_select_folder(self, callback: Callable) -> None:
+        """Register callback for folder selection."""
         self._callbacks["select_folder"] = callback
 
-    # Register callback for next image
     def on_next(self, callback: Callable) -> None:
+        """Register callback for next image."""
         self._callbacks["next"] = callback
 
-    # Register callback for previous image
     def on_prev(self, callback: Callable) -> None:
+        """Register callback for previous image."""
         self._callbacks["prev"] = callback
 
-    # Register callback for reset button
     def add_reset_button(self, callback: Callable) -> None:
+        """Register callback for reset button."""
         self._callbacks["reset"] = callback
         dpg.set_item_callback("reset_button", self._on_reset)
 
-    # Internal event handler for reset button
     def _on_reset(self) -> None:
+        """Internal event handler for reset button."""
         if self._callbacks.get("reset"):
             self._callbacks["reset"]()
 
-    # Show a native folder selection dialog and return the selected path
+    # --- Folder Selection Dialog ---
     def ask_for_folder(self) -> str:
+        """Show a native folder selection dialog and return the selected path."""
         import tkinter as tk
         from tkinter import filedialog
         root = tk.Tk()
@@ -270,8 +282,9 @@ class DearPyGuiView(BaseView):
         root.destroy()
         return folder_selected or ""
 
-    # Display a PIL image in the DearPyGui window
+    # --- Image Display ---
     def show_image(self, photo: Optional[Image.Image]) -> None:
+        """Display a PIL image in the DearPyGui window."""
         FIXED_WIDTH, FIXED_HEIGHT = self.IMAGE_DISPLAY_WIDTH, self.IMAGE_DISPLAY_HEIGHT
         if photo is None:
             if dpg.does_item_exist(self.TAG_IMAGE_DISPLAY):
@@ -300,33 +313,34 @@ class DearPyGuiView(BaseView):
                                height=FIXED_HEIGHT)
         dpg.set_item_label(self.TAG_IMAGE_DISPLAY, f"{FIXED_WIDTH}x{FIXED_HEIGHT}")
     
-    # Clean up DearPyGui resources and close the window
+    # --- Cleanup and Main Loop ---
     def destroy(self) -> None:
+        """Clean up DearPyGui resources and close the window."""
         if self._callbacks.get("close"):
             self._callbacks["close"]()
         dpg.destroy_context()
     
-    # Start the DearPyGui main loop
     def mainloop(self, n: int = 0, **kwargs) -> None:
-        # Show the viewport now that UI is fully constructed and positioned
+        """Start the DearPyGui main loop."""
         dpg.show_viewport()
-        # Start the DearPyGui main loop
         dpg.start_dearpygui()
     
-    # Exit the application
     def quit(self) -> None:
+        """Exit the application."""
         dpg.stop_dearpygui()
         self.destroy()
     
-    # Update the status text in the UI
+    # --- Status and UI Updates ---
     def update_status(self, text: str, file_size_kb: Optional[float] = None) -> None:
+        """Update the status text in the UI."""
         status = text
         if file_size_kb is not None:
             status += f" ({file_size_kb:.1f} KB)"
         dpg.set_value("status_text", status)
     
-    # Helper function to create a single category button with all handlers, theme, and tooltip
+    # --- Category Button Creation and Management ---
     def _create_category_button(self, idx: int, cat: Dict[str, str], parent: str) -> None:
+        """Helper function to create a single category button with all handlers, theme, and tooltip."""
         name = cat.get("name", "")
         button_text = f"{idx + 1}: {name}" if name else f"{idx + 1}: [Empty]"
         btn_id = dpg.generate_uuid()
@@ -339,14 +353,11 @@ class DearPyGuiView(BaseView):
             parent=str(parent)
         )
         dpg.bind_item_theme(btn, self._button_theme)
-        # Store button ID for visual feedback
         if hasattr(self, '_category_button_ids'):
             self._category_button_ids[idx] = btn_id
-        # Add tooltip if category has a name or path
         if name or cat.get("path"):
             with dpg.tooltip(btn_id):
                 dpg.add_text(cat.get("path", ""))
-        # Add right-click handler
         with dpg.item_handler_registry() as handler_id:
             dpg.add_item_clicked_handler(
                 button=dpg.mvMouseButton_Right,
@@ -355,8 +366,8 @@ class DearPyGuiView(BaseView):
             )
         dpg.bind_item_handler_registry(btn_id, handler_id)
 
-    # Set up category buttons for image sorting
     def set_categories(self, categories: List[Dict[str, str]]) -> None:
+        """Set up category buttons for image sorting."""
         if dpg.does_item_exist(self.TAG_CATEGORIES_CONTAINER):
             dpg.delete_item(self.TAG_CATEGORIES_CONTAINER, children_only=True)
         self._category_callbacks.clear()
@@ -372,34 +383,34 @@ class DearPyGuiView(BaseView):
                 cat = categories[idx] if idx < len(categories) else {"name": "", "path": ""}
                 self._create_category_button(idx, cat, group_id)
 
-    # Handle left-click on a category button
     def _on_category_click(self, idx: int) -> None:
+        """Handle left-click on a category button."""
         import inspect
         frame = inspect.currentframe()
         try:
             caller_frame = frame.f_back if frame else None
             if caller_frame and 'key_press_handler' in str(getattr(caller_frame.f_code, 'co_name', '')):
-                # Use the method directly, not via hasattr
                 DearPyGuiView._show_button_feedback(self, idx)
         finally:
             del frame
         if idx in self._category_callbacks:
             self._category_callbacks[idx]["click"](idx)
     
-    # Handle right-click on a category button
     def _on_category_right_click(self, idx: int) -> None:
+        """Handle right-click on a category button."""
         if idx in self._category_callbacks:
             self._category_callbacks[idx]["right"](idx)
     
-    # Bind callbacks for category button clicks and right-clicks
     def bind_category(self, idx: int, on_click: Callable[[int], None], on_right_click: Callable[[int], None]) -> None:
+        """Bind callbacks for category button clicks and right-clicks."""
         self._category_callbacks[idx] = {
             "click": on_click,
             "right": on_right_click
         }
     
-    # Bind keyboard shortcuts for navigation and category selection
+    # --- Keyboard Shortcuts ---
     def bind_keyboard_shortcuts(self) -> None:
+        """Bind keyboard shortcuts for navigation and category selection."""
         if hasattr(self, '_keyboard_handlers_registered') and self._keyboard_handlers_registered:
             return
         self._keyboard_handlers_registered = True
@@ -414,39 +425,43 @@ class DearPyGuiView(BaseView):
             dpg.add_key_press_handler(dpg.mvKey_Right, callback=self._handle_keyboard_next)
 
     def _handle_keyboard_prev(self):
+        """Handle left arrow key for previous image navigation."""
         self._show_nav_button_feedback('prev')
         self._on_prev()
 
     def _handle_keyboard_next(self):
+        """Handle right arrow key for next image navigation."""
         self._show_nav_button_feedback('next')
         self._on_next()
 
     def _handle_keyboard_category(self, idx: int) -> None:
-        # Only trigger shortcut if no modal is open
+        """Handle number key for category selection (if no modal is open)."""
         if getattr(self, "_modal_open", False):
             return
         DearPyGuiView._show_button_feedback(self, idx)
         self._on_category_click(idx)
 
-    # Handle viewport resize events to keep the main window sized correctly
+    # --- Viewport and Window Utilities ---
     def _on_viewport_resize(self) -> None:
+        """Handle viewport resize events to keep the main window sized correctly."""
         self.width = dpg.get_viewport_width()
         self.height = dpg.get_viewport_height()
         dpg.configure_item(self.TAG_MAIN_WINDOW, width=self.width, height=self.height)
 
-    # Utility to center a DearPyGui window in the viewport
     def _center_window(self, window_id: str, width: int, height: int) -> None:
+        """Utility to center a DearPyGui window in the viewport."""
         vp_width = dpg.get_viewport_client_width()
         vp_height = dpg.get_viewport_client_height()
         x = max((vp_width - width) // 2, 0)
         y = max((vp_height - height) // 2, 0)
         dpg.set_item_pos(window_id, [x, y])
 
-    # Show the About popup window, centered in the viewport
     def show_about_popup(self, sender=None, app_data=None, user_data=None):
+        """Show the About popup window, centered in the viewport."""
         self._center_window(self.TAG_ABOUT_POPUP, 400, 160)
         dpg.configure_item(self.TAG_ABOUT_POPUP, show=True)
 
+    # --- UI State Updates ---
     def update_select_folder_button(self, folder_selected: bool) -> None:
         """Update the select folder button label based on selection state."""
         label = "Change Source Folder" if folder_selected else "Select Source Folder"
@@ -459,19 +474,17 @@ class DearPyGuiView(BaseView):
             dpg.set_value("selected_folder_path", "No folder selected")
             self.update_select_folder_button(False)
         else:
-            # Always display with OS-native separators
             import os
             folder_path = os.path.normpath(folder_path)
             dpg.set_value("selected_folder_path", folder_path)
             self.update_select_folder_button(True)
 
-    # --- Visual Feedback for Category Buttons (Keyboard Shortcut) ---
+    # --- Visual Feedback for Category and Navigation Buttons ---
     def _show_button_feedback(self, idx: int, duration: float = 0.05) -> None:
         """Show visual feedback for a category button by temporarily changing its theme."""
         if not hasattr(self, '_category_button_ids') or idx not in self._category_button_ids:
             return
         button_id = self._category_button_ids[idx]
-        # Cancel any existing timer for this button
         if hasattr(self, '_feedback_timers') and idx in self._feedback_timers:
             self._feedback_timers[idx] = None
         dpg.bind_item_theme(button_id, self._button_active_theme)
@@ -483,13 +496,11 @@ class DearPyGuiView(BaseView):
         self._feedback_timers[idx] = True
         threading.Timer(duration, restore_theme).start()
 
-    # --- Visual Feedback for Navigation Buttons (Keyboard Shortcut) ---
     def _show_nav_button_feedback(self, which: str, duration: float = 0.05) -> None:
         """Show visual feedback for a navigation button by temporarily changing its theme."""
         if which not in self._nav_button_ids:
             return
         button_id = self._nav_button_ids[which]
-        # Cancel any existing timer for this button
         if not hasattr(self, '_feedback_timers'):
             self._feedback_timers = dict()
         nav_key = f'nav_{which}'
