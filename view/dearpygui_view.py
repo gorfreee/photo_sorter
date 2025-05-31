@@ -71,7 +71,11 @@ class DearPyGuiView(BaseView):
             "y_pos": y_pos
         }
 
-        # --- Build all UI widgets and windows, but do NOT create viewport yet ---
+        # Create and configure the viewport before building UI to avoid blank initial frame
+        dpg.create_viewport(**self._viewport_params)
+        dpg.setup_dearpygui()
+
+        # --- Build all UI widgets and windows, with viewport parameters ready ---
         with dpg.texture_registry() as self.texture_registry:
             dpg.add_dynamic_texture(
                 width=1,
@@ -127,8 +131,6 @@ class DearPyGuiView(BaseView):
             dpg.add_spacer(height=20)
         self._build_about_popup()
 
-        # --- Do NOT call dpg.create_viewport or dpg.setup_dearpygui here ---
-
         # Responsive centering on resize
         def _on_viewport_resize():
             vp_width = dpg.get_viewport_client_width()
@@ -139,9 +141,8 @@ class DearPyGuiView(BaseView):
             dpg.configure_item(self.TAG_MAIN_WINDOW, width=vp_width, height=dpg.get_viewport_client_height(), pos=[0, 0])
             dpg.configure_item(self.TAG_RESET_BUTTON, pos=[vp_width-70, 30])
         dpg.set_viewport_resize_callback(_on_viewport_resize)
-        # _on_viewport_resize() will be called after viewport is created
 
-        # --- dpg.show_viewport() is only called in mainloop, after all setup ---
+        # (moved to mainloop to show after everything is built)
 
         self._callbacks: Dict[str, Callable] = {}
         self._category_callbacks: Dict[int, Dict[str, Callable]] = {}
@@ -302,10 +303,9 @@ class DearPyGuiView(BaseView):
     
     # Start the DearPyGui main loop
     def mainloop(self, n: int = 0, **kwargs) -> None:
-        # Create and setup viewport only after all UI is built
-        dpg.create_viewport(**self._viewport_params)
-        dpg.setup_dearpygui()
+        # Show the viewport now that UI is fully constructed and positioned
         dpg.show_viewport()
+        # Start the DearPyGui main loop
         dpg.start_dearpygui()
     
     # Exit the application
