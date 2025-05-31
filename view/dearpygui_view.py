@@ -195,7 +195,8 @@ class DearPyGuiView(BaseView):
             no_collapse=True,
             no_move=True,
             width=self.ABOUT_POPUP_WIDTH,
-            height=self.ABOUT_POPUP_HEIGHT
+            height=self.ABOUT_POPUP_HEIGHT,
+            no_resize=True  # Make the About popup non-resizable
         ):
             dpg.add_text("Photo Sorter")
             dpg.add_spacer(height=2)
