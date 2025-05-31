@@ -115,10 +115,8 @@ class DearPyGuiView(BaseView):
             small_icon=str(icon_path),
             large_icon=str(icon_path)
         )
-        dpg.setup_dearpygui()
-        dpg.show_viewport()
 
-        # Center the viewport on the primary monitor
+        # Center the viewport on the primary monitor BEFORE showing it
         try:
             import tkinter as tk
             root = tk.Tk()
@@ -132,6 +130,8 @@ class DearPyGuiView(BaseView):
         except Exception:
             pass
 
+        dpg.setup_dearpygui()
+
         # Responsive centering on resize
         def _on_viewport_resize():
             vp_width = dpg.get_viewport_client_width()
@@ -143,7 +143,9 @@ class DearPyGuiView(BaseView):
             # Move reset button to top right, below menu bar
             dpg.configure_item(self.TAG_RESET_BUTTON, pos=[vp_width-70, 30])  # Changed to 70px from right, 30px from top
         dpg.set_viewport_resize_callback(_on_viewport_resize)
-        _on_viewport_resize()
+        _on_viewport_resize()  # Ensure layout is correct before showing viewport
+
+        dpg.show_viewport()
 
         # Initialize callback and state dictionaries
         self._callbacks: Dict[str, Callable] = {}
