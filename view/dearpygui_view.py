@@ -11,6 +11,7 @@ from view.base_view import BaseView
 import numpy as np
 from PIL import Image
 from typing import Optional, Callable, Union, Any, Dict, List
+import threading
 
 # Main DearPyGui-based view class for the photo sorter application
 class DearPyGuiView(BaseView):
@@ -57,6 +58,19 @@ class DearPyGuiView(BaseView):
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [30, 100, 180, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
+        # --- Active Button Theme for Visual Feedback ---
+        with dpg.theme() as self._button_active_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [30, 100, 180, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [30, 100, 180, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [30, 100, 180, 255])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
+        # Store button IDs for visual feedback
+        self._category_button_ids = dict()
+        self._feedback_timers = dict()
+        # Store navigation button IDs for feedback
+        self._nav_button_ids = dict()
 
         # Create texture registry and image textures
         with dpg.texture_registry() as self.texture_registry:
@@ -150,11 +164,13 @@ class DearPyGuiView(BaseView):
         with dpg.group(horizontal=True, tag=self.TAG_IMAGE_AREA):
             btn_prev = dpg.add_button(label="<", callback=self._on_prev, tag=self.TAG_PREV_BUTTON, width=40, height=self.IMAGE_DISPLAY_HEIGHT)
             dpg.bind_item_theme(btn_prev, self._button_theme)
+            self._nav_button_ids['prev'] = btn_prev
             dpg.add_spacer(width=10)
             dpg.add_image(texture_tag=self.TAG_IMAGE_TEXTURE, tag=self.TAG_IMAGE_DISPLAY, width=self.IMAGE_DISPLAY_WIDTH, height=self.IMAGE_DISPLAY_HEIGHT)
             dpg.add_spacer(width=10)
             btn_next = dpg.add_button(label=">", callback=self._on_next, tag=self.TAG_NEXT_BUTTON, width=40, height=self.IMAGE_DISPLAY_HEIGHT)
             dpg.bind_item_theme(btn_next, self._button_theme)
+            self._nav_button_ids['next'] = btn_next
 
     def _build_categories_container(self):
         dpg.add_group(tag=self.TAG_CATEGORIES_CONTAINER)
@@ -361,6 +377,9 @@ class DearPyGuiView(BaseView):
             parent=str(parent)
         )
         dpg.bind_item_theme(btn, self._button_theme)
+        # Store button ID for visual feedback
+        if hasattr(self, '_category_button_ids'):
+            self._category_button_ids[idx] = btn_id
         # Add tooltip if category has a name or path
         if name or cat.get("path"):
             with dpg.tooltip(btn_id):
@@ -379,6 +398,8 @@ class DearPyGuiView(BaseView):
         if dpg.does_item_exist(self.TAG_CATEGORIES_CONTAINER):
             dpg.delete_item(self.TAG_CATEGORIES_CONTAINER, children_only=True)
         self._category_callbacks.clear()
+        if hasattr(self, '_category_button_ids'):
+            self._category_button_ids.clear()  # Clear button IDs when rebuilding
         # Arrange buttons in a 3x3 grid (3 rows, 3 buttons per row)
         for row in range(3):
             group_id = str(dpg.generate_uuid())
@@ -391,6 +412,15 @@ class DearPyGuiView(BaseView):
 
     # Handle left-click on a category button
     def _on_category_click(self, idx: int) -> None:
+        import inspect
+        frame = inspect.currentframe()
+        try:
+            caller_frame = frame.f_back if frame else None
+            if caller_frame and 'key_press_handler' in str(getattr(caller_frame.f_code, 'co_name', '')):
+                # Use the method directly, not via hasattr
+                DearPyGuiView._show_button_feedback(self, idx)
+        finally:
+            del frame
         if idx in self._category_callbacks:
             self._category_callbacks[idx]["click"](idx)
     
@@ -415,12 +445,24 @@ class DearPyGuiView(BaseView):
             for i in range(9):
                 dpg.add_key_press_handler(
                     dpg.mvKey_1 + i,
-                    callback=lambda s, a, u: self._on_category_click(u),
+                    callback=lambda s, a, u: self._handle_keyboard_category(u),
                     user_data=i
                 )
-            dpg.add_key_press_handler(dpg.mvKey_Left, callback=lambda: self._on_prev())
-            dpg.add_key_press_handler(dpg.mvKey_Right, callback=lambda: self._on_next())
-    
+            dpg.add_key_press_handler(dpg.mvKey_Left, callback=self._handle_keyboard_prev)
+            dpg.add_key_press_handler(dpg.mvKey_Right, callback=self._handle_keyboard_next)
+
+    def _handle_keyboard_prev(self):
+        self._show_nav_button_feedback('prev')
+        self._on_prev()
+
+    def _handle_keyboard_next(self):
+        self._show_nav_button_feedback('next')
+        self._on_next()
+
+    def _handle_keyboard_category(self, idx: int) -> None:
+        DearPyGuiView._show_button_feedback(self, idx)
+        self._on_category_click(idx)
+
     # Handle viewport resize events to keep the main window sized correctly
     def _on_viewport_resize(self) -> None:
         self.width = dpg.get_viewport_width()
@@ -457,3 +499,42 @@ class DearPyGuiView(BaseView):
             folder_path = os.path.normpath(folder_path)
             dpg.set_value("selected_folder_path", folder_path)
             self.update_select_folder_button(True)
+
+    # --- Visual Feedback for Category Buttons (Keyboard Shortcut) ---
+    def _show_button_feedback(self, idx: int, duration: float = 0.05) -> None:
+        """Show visual feedback for a category button by temporarily changing its theme."""
+        if not hasattr(self, '_category_button_ids') or idx not in self._category_button_ids:
+            return
+        button_id = self._category_button_ids[idx]
+        # Cancel any existing timer for this button
+        if hasattr(self, '_feedback_timers') and idx in self._feedback_timers:
+            self._feedback_timers[idx] = None
+        dpg.bind_item_theme(button_id, self._button_active_theme)
+        def restore_theme():
+            if self._feedback_timers.get(idx) is not None:
+                dpg.bind_item_theme(button_id, self._button_theme)
+                if idx in self._feedback_timers:
+                    del self._feedback_timers[idx]
+        self._feedback_timers[idx] = True
+        threading.Timer(duration, restore_theme).start()
+
+    # --- Visual Feedback for Navigation Buttons (Keyboard Shortcut) ---
+    def _show_nav_button_feedback(self, which: str, duration: float = 0.05) -> None:
+        """Show visual feedback for a navigation button by temporarily changing its theme."""
+        if which not in self._nav_button_ids:
+            return
+        button_id = self._nav_button_ids[which]
+        # Cancel any existing timer for this button
+        if not hasattr(self, '_feedback_timers'):
+            self._feedback_timers = dict()
+        nav_key = f'nav_{which}'
+        if nav_key in self._feedback_timers:
+            self._feedback_timers[nav_key] = None
+        dpg.bind_item_theme(button_id, self._button_active_theme)
+        def restore_theme():
+            if self._feedback_timers.get(nav_key) is not None:
+                dpg.bind_item_theme(button_id, self._button_theme)
+                if nav_key in self._feedback_timers:
+                    del self._feedback_timers[nav_key]
+        self._feedback_timers[nav_key] = True
+        threading.Timer(duration, restore_theme).start()
