@@ -26,9 +26,16 @@ def move_image(src: Path, dest_folder: Path) -> None:
 def create_thumbnail(image_path: Path, size=(400, 300)) -> Image.Image:
     """
     Create a thumbnail for the given image path and return a PIL Image object.
-    Always resize to the fixed size for consistent Dear PyGui display.
+    Preserves aspect ratio and centers the image on a neutral background.
     """
     img = Image.open(image_path)
     img = img.convert("RGBA")
-    img = img.resize(size, Image.Resampling.LANCZOS)
-    return img  # Return the PIL Image object
+    # Use thumbnail to preserve aspect ratio
+    img.thumbnail(size, Image.Resampling.LANCZOS)
+    # Create a neutral background (dark gray)
+    background = Image.new("RGBA", size, (30, 30, 30, 255))
+    # Center the image
+    x = (size[0] - img.width) // 2
+    y = (size[1] - img.height) // 2
+    background.paste(img, (x, y), img)
+    return background  # Return the PIL Image object

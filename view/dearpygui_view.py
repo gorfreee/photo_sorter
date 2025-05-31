@@ -292,8 +292,7 @@ class DearPyGuiView(BaseView):
             return
         if photo.mode != "RGBA":
             photo = photo.convert("RGBA")
-        if photo.size != (FIXED_WIDTH, FIXED_HEIGHT):
-            photo = photo.resize((FIXED_WIDTH, FIXED_HEIGHT), Image.Resampling.LANCZOS)
+        # No need to resize here; model.create_thumbnail already returns a fixed-size, aspect-ratio-preserved image
         img_array = np.asarray(photo).astype(np.float32) / 255.0
         if img_array.ndim == 2:
             img_array = np.stack([img_array]*3 + [np.ones_like(img_array)], axis=-1)
