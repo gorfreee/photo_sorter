@@ -48,6 +48,15 @@ class DearPyGuiView(BaseView):
         self.x = self.DEFAULT_X
         self.y = self.DEFAULT_Y
 
+        # --- Modern Button Theme ---
+        with dpg.theme() as self._button_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [40, 120, 220, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [60, 140, 240, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [30, 100, 180, 255])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
+
         # Create texture registry and image textures
         with dpg.texture_registry() as self.texture_registry:
             dpg.add_dynamic_texture(
@@ -64,7 +73,6 @@ class DearPyGuiView(BaseView):
                 tag=self.TAG_IMAGE_TEXTURE
             )
 
-        # Create the main application viewport and window
         icon_path = Path(__file__).parent.parent / "icon.ico"
         dpg.create_viewport(
             title="Photo Sorter",
@@ -77,13 +85,23 @@ class DearPyGuiView(BaseView):
         )
         dpg.setup_dearpygui()
 
-        # Build UI modularly
+        # --- Modern, Centered Layout ---
         with dpg.window(label="", tag=self.TAG_MAIN_WINDOW, no_close=True, no_collapse=True, no_move=True, no_title_bar=True, no_resize=True, width=self.width, height=self.height, pos=[0,0]):
             self._build_menu_bar()
-            self._build_top_controls()
-            self._build_status_text()
-            self._build_image_area()
-            self._build_categories_container()
+            dpg.add_spacer(height=20)
+            # Center content horizontally using spacers
+            with dpg.group(horizontal=True):
+                dpg.add_spacer(width=0, tag="left_spacer")  # Will be resized to center content
+                with dpg.group(tag="center_content"):  # Default is vertical stacking
+                    self._build_top_controls()
+                    dpg.add_spacer(height=10)
+                    self._build_status_text()
+                    dpg.add_spacer(height=20)
+                    self._build_image_area()
+                    dpg.add_spacer(height=20)
+                    self._build_categories_container()
+                dpg.add_spacer(width=0, tag="right_spacer")  # Will be resized to center content
+            dpg.add_spacer(height=20)
         self._build_about_popup()
 
         # Initialize callback and state dictionaries
@@ -92,16 +110,16 @@ class DearPyGuiView(BaseView):
         self._folder_path: Optional[str] = None
         self._exit_handler: Optional[Callable] = None
         
-        # Show the application viewport
         dpg.show_viewport()
 
-        # Set up viewport resize handling to keep the main window filling the viewport
+        # Responsive centering on resize
         def _on_viewport_resize():
             vp_width = dpg.get_viewport_client_width()
-            vp_height = dpg.get_viewport_client_height()
-            self.width = vp_width
-            self.height = vp_height
-            dpg.configure_item(self.TAG_MAIN_WINDOW, width=vp_width, height=vp_height, pos=[0, 0])
+            content_width = 2 * 40 + self.IMAGE_DISPLAY_WIDTH + 120  # Estimate: side buttons + image + padding
+            side_space = max((vp_width - content_width) // 2, 0)
+            dpg.configure_item("left_spacer", width=side_space)
+            dpg.configure_item("right_spacer", width=side_space)
+            dpg.configure_item(self.TAG_MAIN_WINDOW, width=vp_width, height=dpg.get_viewport_client_height(), pos=[0, 0])
         dpg.set_viewport_resize_callback(_on_viewport_resize)
         _on_viewport_resize()
 
@@ -112,18 +130,24 @@ class DearPyGuiView(BaseView):
                 dpg.add_menu_item(label="About", callback=self.show_about_popup)
 
     def _build_top_controls(self):
-        dpg.add_group(horizontal=True, tag=self.TAG_TOP_CONTROLS)
-        dpg.add_button(label="Select Folder", callback=self._on_select_folder, parent=self.TAG_TOP_CONTROLS)
-        dpg.add_button(label="Reset", tag=self.TAG_RESET_BUTTON, parent=self.TAG_TOP_CONTROLS)
+        with dpg.group(horizontal=True, tag=self.TAG_TOP_CONTROLS):
+            btn1 = dpg.add_button(label="Select Folder", callback=self._on_select_folder)
+            dpg.bind_item_theme(btn1, self._button_theme)
+            btn2 = dpg.add_button(label="Reset", tag=self.TAG_RESET_BUTTON)
+            dpg.bind_item_theme(btn2, self._button_theme)
 
     def _build_status_text(self):
         dpg.add_text("Select a source folder", tag=self.TAG_STATUS_TEXT)
 
     def _build_image_area(self):
         with dpg.group(horizontal=True, tag=self.TAG_IMAGE_AREA):
-            dpg.add_button(label="<", callback=self._on_prev, tag=self.TAG_PREV_BUTTON)
+            btn_prev = dpg.add_button(label="<", callback=self._on_prev, tag=self.TAG_PREV_BUTTON, width=40, height=self.IMAGE_DISPLAY_HEIGHT)
+            dpg.bind_item_theme(btn_prev, self._button_theme)
+            dpg.add_spacer(width=10)
             dpg.add_image(texture_tag=self.TAG_IMAGE_TEXTURE, tag=self.TAG_IMAGE_DISPLAY, width=self.IMAGE_DISPLAY_WIDTH, height=self.IMAGE_DISPLAY_HEIGHT)
-            dpg.add_button(label=">", callback=self._on_next, tag=self.TAG_NEXT_BUTTON)
+            dpg.add_spacer(width=10)
+            btn_next = dpg.add_button(label=">", callback=self._on_next, tag=self.TAG_NEXT_BUTTON, width=40, height=self.IMAGE_DISPLAY_HEIGHT)
+            dpg.bind_item_theme(btn_next, self._button_theme)
 
     def _build_categories_container(self):
         dpg.add_group(tag=self.TAG_CATEGORIES_CONTAINER)
@@ -327,13 +351,14 @@ class DearPyGuiView(BaseView):
             button_text = f"{idx + 1}: {name}" if name else f"{idx + 1}: [Empty]"
             with dpg.group(parent=self.TAG_CATEGORIES_CONTAINER, horizontal=True):
                 btn_id = dpg.generate_uuid()
-                dpg.add_button(
+                btn = dpg.add_button(
                     label=button_text,
                     callback=lambda s, a, u: self._on_category_click(u),
                     user_data=idx,
                     width=self.CATEGORY_BUTTON_WIDTH,
                     tag=btn_id
                 )
+                dpg.bind_item_theme(btn, self._button_theme)
                 with dpg.item_handler_registry() as handler_id:
                     dpg.add_item_clicked_handler(
                         button=dpg.mvMouseButton_Right,
