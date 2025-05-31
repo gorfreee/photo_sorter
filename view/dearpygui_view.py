@@ -345,27 +345,30 @@ class DearPyGuiView(BaseView):
         if dpg.does_item_exist(self.TAG_CATEGORIES_CONTAINER):
             dpg.delete_item(self.TAG_CATEGORIES_CONTAINER, children_only=True)
         self._category_callbacks.clear()
-        for idx in range(9):
-            cat = categories[idx] if idx < len(categories) else {"name": "", "path": ""}
-            name = cat.get("name", "")
-            button_text = f"{idx + 1}: {name}" if name else f"{idx + 1}: [Empty]"
+        # Arrange buttons in a 3x3 grid (3 rows, 3 buttons per row)
+        for row in range(3):
             with dpg.group(parent=self.TAG_CATEGORIES_CONTAINER, horizontal=True):
-                btn_id = dpg.generate_uuid()
-                btn = dpg.add_button(
-                    label=button_text,
-                    callback=lambda s, a, u: self._on_category_click(u),
-                    user_data=idx,
-                    width=self.CATEGORY_BUTTON_WIDTH,
-                    tag=btn_id
-                )
-                dpg.bind_item_theme(btn, self._button_theme)
-                with dpg.item_handler_registry() as handler_id:
-                    dpg.add_item_clicked_handler(
-                        button=dpg.mvMouseButton_Right,
-                        callback=lambda s, a, u: self._on_category_right_click(u),
-                        user_data=idx
+                for col in range(3):
+                    idx = row * 3 + col
+                    cat = categories[idx] if idx < len(categories) else {"name": "", "path": ""}
+                    name = cat.get("name", "")
+                    button_text = f"{idx + 1}: {name}" if name else f"{idx + 1}: [Empty]"
+                    btn_id = dpg.generate_uuid()
+                    btn = dpg.add_button(
+                        label=button_text,
+                        callback=lambda s, a, u: self._on_category_click(u),
+                        user_data=idx,
+                        width=self.CATEGORY_BUTTON_WIDTH,
+                        tag=btn_id
                     )
-                dpg.bind_item_handler_registry(btn_id, handler_id)
+                    dpg.bind_item_theme(btn, self._button_theme)
+                    with dpg.item_handler_registry() as handler_id:
+                        dpg.add_item_clicked_handler(
+                            button=dpg.mvMouseButton_Right,
+                            callback=lambda s, a, u: self._on_category_right_click(u),
+                            user_data=idx
+                        )
+                    dpg.bind_item_handler_registry(btn_id, handler_id)
 
     # Handle left-click on a category button
     def _on_category_click(self, idx: int) -> None:
