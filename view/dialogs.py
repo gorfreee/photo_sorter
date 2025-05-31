@@ -63,7 +63,7 @@ def configure_category(idx: int, initial: Dict[str, str], callback: Callable) ->
     name_id = f"cat_name_{window_id}"
     folder_id = f"cat_folder_{window_id}"
 
-    width, height = 420, 210
+    width, height = 315, 175
 
     def _on_ok():
         callback({

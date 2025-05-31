@@ -83,8 +83,8 @@ class DearPyGuiView(BaseView):
             no_close=True,
             no_collapse=True,
             no_move=True,
-            width=400,
-            height=160
+            width=360,
+            height=150
         ):
             dpg.add_text("Photo Sorter")
             dpg.add_spacer(height=2)
