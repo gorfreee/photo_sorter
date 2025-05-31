@@ -62,6 +62,7 @@ def configure_category(idx: int, initial: Dict[str, str], callback: Callable) ->
     window_id = f"category_config_{idx}_{uuid.uuid4()}"
     name_id = f"cat_name_{window_id}"
     folder_id = f"cat_folder_{window_id}"
+    ok_id = f"cat_ok_{window_id}"
 
     width, height = 315, 175
 
@@ -90,19 +91,29 @@ def configure_category(idx: int, initial: Dict[str, str], callback: Callable) ->
         root.destroy()
         if folder_selected:
             dpg.set_value(folder_id, folder_selected)
+            _update_ok_state()  # Update OK state after browsing
+
+    def _update_ok_state():
+        # Enable OK only if both fields are non-empty
+        name_val = dpg.get_value(name_id)
+        folder_val = dpg.get_value(folder_id)
+        enabled = bool(name_val.strip()) and bool(folder_val.strip())
+        dpg.configure_item(ok_id, enabled=enabled)
 
     with dpg.window(label=f"Edit Category {idx+1}", modal=True, tag=window_id, width=width, height=height, no_resize=True, no_collapse=True):
         dpg.add_text("Category Name:")
-        dpg.add_input_text(tag=name_id, default_value=initial.get("name", ""), width=300)
+        dpg.add_input_text(tag=name_id, default_value=initial.get("name", ""), width=300, callback=lambda s,a,u: _update_ok_state())
         dpg.add_spacer(height=5)
         dpg.add_text("Destination Folder:")
         with dpg.group(horizontal=True):
-            dpg.add_input_text(tag=folder_id, default_value=initial.get("path", ""), width=220)  # Use 'path' for initial value
+            dpg.add_input_text(tag=folder_id, default_value=initial.get("path", ""), width=220, callback=lambda s,a,u: _update_ok_state())  # Use 'path' for initial value
             dpg.add_button(label="Browse...", callback=_on_browse)
         dpg.add_spacer(height=10)
         with dpg.group(horizontal=True):
-            dpg.add_button(label="OK", callback=_on_ok)
+            dpg.add_button(label="OK", tag=ok_id, callback=_on_ok)
             dpg.add_button(label="Cancel", callback=_on_cancel)
             dpg.add_button(label="Delete", callback=_on_delete)
     # Center after creation
     _center_window(window_id, width, height)
+    # Set initial OK state
+    _update_ok_state()
