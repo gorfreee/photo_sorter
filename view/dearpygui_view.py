@@ -88,6 +88,9 @@ class DearPyGuiView(BaseView):
         # --- Modern, Centered Layout ---
         with dpg.window(label="", tag=self.TAG_MAIN_WINDOW, no_close=True, no_collapse=True, no_move=True, no_title_bar=True, no_resize=True, width=self.width, height=self.height, pos=[0,0]):
             self._build_menu_bar()
+            # Add reset button at top right (absolute position, will be updated on resize)
+            btn_reset = dpg.add_button(label="Reset", tag=self.TAG_RESET_BUTTON, pos=[self.width-70, 30])  # Changed to 70px from right, 30px from top
+            dpg.bind_item_theme(btn_reset, self._button_theme)
             dpg.add_spacer(height=20)
             # Center content horizontally using spacers
             with dpg.group(horizontal=True):
@@ -120,6 +123,8 @@ class DearPyGuiView(BaseView):
             dpg.configure_item("left_spacer", width=side_space)
             dpg.configure_item("right_spacer", width=side_space)
             dpg.configure_item(self.TAG_MAIN_WINDOW, width=vp_width, height=dpg.get_viewport_client_height(), pos=[0, 0])
+            # Move reset button to top right, below menu bar
+            dpg.configure_item(self.TAG_RESET_BUTTON, pos=[vp_width-70, 30])  # Changed to 70px from right, 30px from top
         dpg.set_viewport_resize_callback(_on_viewport_resize)
         _on_viewport_resize()
 
@@ -133,8 +138,7 @@ class DearPyGuiView(BaseView):
         with dpg.group(horizontal=True, tag=self.TAG_TOP_CONTROLS):
             btn1 = dpg.add_button(label="Select Folder", callback=self._on_select_folder)
             dpg.bind_item_theme(btn1, self._button_theme)
-            btn2 = dpg.add_button(label="Reset", tag=self.TAG_RESET_BUTTON)
-            dpg.bind_item_theme(btn2, self._button_theme)
+            # Removed reset button from here
 
     def _build_status_text(self):
         dpg.add_text("Select a source folder", tag=self.TAG_STATUS_TEXT)
