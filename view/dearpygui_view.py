@@ -102,18 +102,49 @@ class DearPyGuiView(BaseView):
             )
 
         # --- Define button themes for modern look and visual feedback ---
-        with dpg.theme() as self._button_theme:
+        # Theme for Reset button (e.g., red)
+        with dpg.theme() as self._reset_button_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [200, 60, 60, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [220, 80, 80, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [180, 40, 40, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 255])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
+        # Theme for Select Source Folder button (e.g., teal)
+        with dpg.theme() as self._select_folder_button_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [40, 180, 180, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [60, 200, 200, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [30, 140, 140, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 255])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
+        # Theme for navigation buttons (e.g., blue)
+        with dpg.theme() as self._nav_button_theme:
             with dpg.theme_component(dpg.mvButton):
                 dpg.add_theme_color(dpg.mvThemeCol_Button, [40, 120, 220, 255])
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [60, 140, 240, 255])
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [30, 100, 180, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
+        # Theme for category buttons (e.g., green)
+        with dpg.theme() as self._category_button_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [60, 180, 80, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [80, 200, 100, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [40, 140, 60, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 255])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
+        # Active/feedback theme for all buttons (darker shade)
         with dpg.theme() as self._button_active_theme:
             with dpg.theme_component(dpg.mvButton):
                 dpg.add_theme_color(dpg.mvThemeCol_Button, [30, 100, 180, 255])
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [30, 100, 180, 255])
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [30, 100, 180, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
         self._category_button_ids = dict()
@@ -124,7 +155,7 @@ class DearPyGuiView(BaseView):
         with dpg.window(label="", tag=self.TAG_MAIN_WINDOW, no_close=True, no_collapse=True, no_move=True, no_title_bar=True, no_resize=True, width=self.width, height=self.height, pos=[0,0]):
             self._build_menu_bar()
             btn_reset = dpg.add_button(label="Reset", tag=self.TAG_RESET_BUTTON, pos=[self.width-70, 30])
-            dpg.bind_item_theme(btn_reset, self._button_theme)
+            dpg.bind_item_theme(btn_reset, self._reset_button_theme)
             dpg.add_spacer(height=20)
             with dpg.group(horizontal=True):
                 dpg.add_spacer(width=0, tag="left_spacer")
@@ -169,7 +200,7 @@ class DearPyGuiView(BaseView):
         """Build the top controls: select folder button and folder path display."""
         with dpg.group(horizontal=True, tag=self.TAG_TOP_CONTROLS):
             btn1 = dpg.add_button(label="Select Source Folder", callback=self._on_select_folder, tag="select_folder_button")
-            dpg.bind_item_theme(btn1, self._button_theme)
+            dpg.bind_item_theme(btn1, self._select_folder_button_theme)
             dpg.add_spacer(width=10)
             dpg.add_text("No folder selected", tag="selected_folder_path", wrap=400)
 
@@ -181,13 +212,13 @@ class DearPyGuiView(BaseView):
         """Build the image display area with navigation buttons."""
         with dpg.group(horizontal=True, tag=self.TAG_IMAGE_AREA):
             btn_prev = dpg.add_button(label="<", callback=self._on_prev, tag=self.TAG_PREV_BUTTON, width=40, height=self.IMAGE_DISPLAY_HEIGHT)
-            dpg.bind_item_theme(btn_prev, self._button_theme)
+            dpg.bind_item_theme(btn_prev, self._nav_button_theme)
             self._nav_button_ids['prev'] = btn_prev
             dpg.add_spacer(width=10)
             dpg.add_image(texture_tag=self.TAG_IMAGE_TEXTURE, tag=self.TAG_IMAGE_DISPLAY, width=self.IMAGE_DISPLAY_WIDTH, height=self.IMAGE_DISPLAY_HEIGHT)
             dpg.add_spacer(width=10)
             btn_next = dpg.add_button(label=">", callback=self._on_next, tag=self.TAG_NEXT_BUTTON, width=40, height=self.IMAGE_DISPLAY_HEIGHT)
-            dpg.bind_item_theme(btn_next, self._button_theme)
+            dpg.bind_item_theme(btn_next, self._nav_button_theme)
             self._nav_button_ids['next'] = btn_next
 
     def _build_categories_container(self):
@@ -351,7 +382,7 @@ class DearPyGuiView(BaseView):
             tag=btn_id,
             parent=str(parent)
         )
-        dpg.bind_item_theme(btn, self._button_theme)
+        dpg.bind_item_theme(btn, self._category_button_theme)
         if hasattr(self, '_category_button_ids'):
             self._category_button_ids[idx] = btn_id
         if name or cat.get("path"):
@@ -489,7 +520,7 @@ class DearPyGuiView(BaseView):
         dpg.bind_item_theme(button_id, self._button_active_theme)
         def restore_theme():
             if self._feedback_timers.get(idx) is not None:
-                dpg.bind_item_theme(button_id, self._button_theme)
+                dpg.bind_item_theme(button_id, self._category_button_theme)
                 if idx in self._feedback_timers:
                     del self._feedback_timers[idx]
         self._feedback_timers[idx] = True
@@ -508,7 +539,7 @@ class DearPyGuiView(BaseView):
         dpg.bind_item_theme(button_id, self._button_active_theme)
         def restore_theme():
             if self._feedback_timers.get(nav_key) is not None:
-                dpg.bind_item_theme(button_id, self._button_theme)
+                dpg.bind_item_theme(button_id, self._nav_button_theme)
                 if nav_key in self._feedback_timers:
                     del self._feedback_timers[nav_key]
         self._feedback_timers[nav_key] = True
