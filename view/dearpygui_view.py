@@ -122,9 +122,9 @@ class DearPyGuiView(BaseView):
         # Feedback theme for Select Source Folder button
         with dpg.theme() as self._select_folder_button_feedback_theme:
             with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [44, 90, 130, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [33, 70, 110, 255])        # Use active color for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [33, 70, 110, 255]) # Use active color for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])  # Use active color for feedback
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
@@ -144,9 +144,9 @@ class DearPyGuiView(BaseView):
         # Feedback theme for Reset button
         with dpg.theme() as self._reset_button_feedback_theme:
             with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [44, 90, 130, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [33, 70, 110, 255])        # Use active color for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [33, 70, 110, 255]) # Use active color for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])  # Use active color for feedback
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
@@ -166,9 +166,9 @@ class DearPyGuiView(BaseView):
         # Feedback theme for Previous button
         with dpg.theme() as self._prev_button_feedback_theme:
             with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [44, 90, 130, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [33, 70, 110, 255])        # Use active color for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [33, 70, 110, 255]) # Use active color for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])  # Use active color for feedback
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
@@ -188,9 +188,9 @@ class DearPyGuiView(BaseView):
         # Feedback theme for Next button
         with dpg.theme() as self._next_button_feedback_theme:
             with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [44, 90, 130, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [33, 70, 110, 255])        # Use active color for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [33, 70, 110, 255]) # Use active color for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])  # Use active color for feedback
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
@@ -210,9 +210,9 @@ class DearPyGuiView(BaseView):
         # Feedback theme for Category button
         with dpg.theme() as self._category_button_feedback_theme:
             with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [44, 90, 130, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [33, 70, 110, 255])        # Use active color for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [33, 70, 110, 255]) # Use active color for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])  # Use active color for feedback
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
