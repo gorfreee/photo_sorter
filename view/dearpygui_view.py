@@ -53,6 +53,12 @@ class DearPyGuiView(BaseView):
         # --- Initialize Dear PyGui context and compute viewport position/size ---
         DearPyGuiView._instance = self  # Set singleton instance
         dpg.create_context()
+        # --- Load and bind font globally ---
+        font_path = str(Path(__file__).parent / "Roboto-Regular.ttf")
+        with dpg.font_registry():
+            default_font = dpg.add_font(font_path, 18)  # 18 is a good default size
+        dpg.bind_font(default_font)
+
         self.width = self.DEFAULT_WIDTH
         self.height = self.DEFAULT_HEIGHT
 
