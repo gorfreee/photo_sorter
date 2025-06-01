@@ -43,7 +43,7 @@ class DearPyGuiView(BaseView):
     # Layout parameters for window and widgets
     DEFAULT_WIDTH = 900
     DEFAULT_HEIGHT = 650
-    IMAGE_DISPLAY_WIDTH = 400
+    IMAGE_DISPLAY_WIDTH = 480
     IMAGE_DISPLAY_HEIGHT = 300
     CATEGORY_BUTTON_WIDTH = 200
     ABOUT_POPUP_WIDTH = 360

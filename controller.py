@@ -9,6 +9,7 @@ from view.factory import create_view
 from view.dialogs import configure_category, show_error
 from typing import Callable
 import threading  # For background thumbnail preloading
+from view.dearpygui_view import DearPyGuiView
 
 class PhotoSorterController:
     THUMBNAIL_PRELOAD_COUNT = 15  # Number of thumbnails to preload for instant navigation
@@ -56,7 +57,10 @@ class PhotoSorterController:
                 for img_path in self.images[1:self.THUMBNAIL_PRELOAD_COUNT]:
                     if img_path not in self.thumbnail_cache:
                         try:
-                            self.thumbnail_cache[img_path] = create_thumbnail(img_path)
+                            self.thumbnail_cache[img_path] = create_thumbnail(
+                                img_path,
+                                size=(DearPyGuiView.IMAGE_DISPLAY_WIDTH, DearPyGuiView.IMAGE_DISPLAY_HEIGHT)
+                            )
                         except Exception:
                             self.thumbnail_cache[img_path] = None
             if len(self.images) > 1:
@@ -78,7 +82,10 @@ class PhotoSorterController:
         pil_thumb = self.thumbnail_cache.get(img_path)
         if pil_thumb is None:
             try:
-                pil_thumb = create_thumbnail(img_path)
+                pil_thumb = create_thumbnail(
+                    img_path,
+                    size=(DearPyGuiView.IMAGE_DISPLAY_WIDTH, DearPyGuiView.IMAGE_DISPLAY_HEIGHT)
+                )
             except Exception:
                 pil_thumb = None
             self.thumbnail_cache[img_path] = pil_thumb
@@ -100,7 +107,10 @@ class PhotoSorterController:
                 and self.images[self.current_index + 1] not in self.thumbnail_cache
                 and self.current_index + 1 < self.THUMBNAIL_PRELOAD_COUNT + 10):
                 try:
-                    self.thumbnail_cache[self.images[self.current_index + 1]] = create_thumbnail(self.images[self.current_index + 1])
+                    self.thumbnail_cache[self.images[self.current_index + 1]] = create_thumbnail(
+                        self.images[self.current_index + 1],
+                        size=(DearPyGuiView.IMAGE_DISPLAY_WIDTH, DearPyGuiView.IMAGE_DISPLAY_HEIGHT)
+                    )
                 except Exception:
                     self.thumbnail_cache[self.images[self.current_index + 1]] = None
             self.show_current()

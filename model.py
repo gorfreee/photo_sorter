@@ -23,7 +23,7 @@ def move_image(src: Path, dest_folder: Path) -> None:
     dest_folder.mkdir(parents=True, exist_ok=True)
     shutil.move(str(src), str(dest_folder))
 
-def create_thumbnail(image_path: Path, size=(400, 300)) -> Image.Image:
+def create_thumbnail(image_path: Path, size) -> Image.Image:
     """
     Create a thumbnail for the given image path and return a PIL Image object.
     Preserves aspect ratio and centers the image on a neutral background.
