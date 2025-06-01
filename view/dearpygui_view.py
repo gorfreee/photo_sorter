@@ -116,7 +116,7 @@ class DearPyGuiView(BaseView):
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
-                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 2)
                 dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 4, 4)
         # Feedback theme for Select Source Folder button
@@ -127,7 +127,7 @@ class DearPyGuiView(BaseView):
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])  # Use active color for feedback
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
-                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 2)
                 dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 4, 4)
         # Reset button theme (independent)
@@ -275,8 +275,8 @@ class DearPyGuiView(BaseView):
                 label="Select Source Folder",
                 callback=self._on_select_folder,
                 tag="select_folder_button",
-                width=220,  # Fixed width for visual consistency
-                height=40   # Fixed height for visual consistency
+                width=170,  # Fixed width for visual consistency
+                height=30   # Fixed height for visual consistency
             )
             dpg.bind_item_theme(btn1, self._select_folder_button_theme)
             dpg.add_spacer(width=10)
