@@ -41,13 +41,13 @@ class DearPyGuiView(BaseView):
     TAG_GITHUB_LINK = "github_link"
 
     # Layout parameters for window and widgets
-    DEFAULT_WIDTH = 900
-    DEFAULT_HEIGHT = 650
+    DEFAULT_WIDTH = 1000
+    DEFAULT_HEIGHT = 700
     IMAGE_DISPLAY_WIDTH = 480
     IMAGE_DISPLAY_HEIGHT = 300
     CATEGORY_BUTTON_WIDTH = 200
-    ABOUT_POPUP_WIDTH = 360
-    ABOUT_POPUP_HEIGHT = 150
+    ABOUT_POPUP_WIDTH = 355
+    ABOUT_POPUP_HEIGHT = 180
 
     def __init__(self):
         # --- Initialize Dear PyGui context and compute viewport position/size ---
