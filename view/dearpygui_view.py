@@ -207,6 +207,17 @@ class DearPyGuiView(BaseView):
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
                 dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 4, 4)
+        # Category button theme for DEFINED categories (darker)
+        with dpg.theme() as self._category_button_defined_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [38, 40, 44, 255])  # darker grey
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 4, 4)
         # Feedback theme for Category button
         with dpg.theme() as self._category_button_feedback_theme:
             with dpg.theme_component(dpg.mvButton):
@@ -456,6 +467,7 @@ class DearPyGuiView(BaseView):
     def _create_category_button(self, idx: int, cat: Dict[str, str], parent: str) -> None:
         """Helper function to create a single category button with all handlers, theme, and tooltip."""
         name = cat.get("name", "")
+        path = cat.get("path", "")
         button_text = f"{idx + 1}: {name}" if name else f"{idx + 1}: [Empty]"
         btn_id = dpg.generate_uuid()
         btn = dpg.add_button(
@@ -466,12 +478,16 @@ class DearPyGuiView(BaseView):
             tag=btn_id,
             parent=str(parent)
         )
-        dpg.bind_item_theme(btn, self._category_button_theme)
+        # Use defined theme if both name and path are set, else use default
+        if name and path:
+            dpg.bind_item_theme(btn, self._category_button_defined_theme)
+        else:
+            dpg.bind_item_theme(btn, self._category_button_theme)
         if hasattr(self, '_category_button_ids'):
             self._category_button_ids[idx] = btn_id
-        if name or cat.get("path"):
+        if name or path:
             with dpg.tooltip(btn_id):
-                dpg.add_text(cat.get("path", ""))
+                dpg.add_text(path)
         with dpg.item_handler_registry() as handler_id:
             dpg.add_item_clicked_handler(
                 button=dpg.mvMouseButton_Right,
@@ -599,7 +615,30 @@ class DearPyGuiView(BaseView):
         dpg.bind_item_theme(button_id, self._category_button_feedback_theme)
         def restore_theme():
             if self._feedback_timers.get(idx) is not None:
-                dpg.bind_item_theme(button_id, self._category_button_theme)
+                # Determine if the category is defined (has both name and path)
+                categories = getattr(self, '_current_categories', None)
+                if categories is None and hasattr(self, '_category_button_ids'):
+                    # Try to get categories from the button labels
+                    categories = []
+                    for i in range(9):
+                        btn_id = self._category_button_ids.get(i)
+                        if btn_id and dpg.does_item_exist(btn_id):
+                            label = dpg.get_item_label(btn_id)
+                            if label and '[Empty]' in label:
+                                categories.append({'name': '', 'path': ''})
+                            else:
+                                categories.append({'name': 'x', 'path': 'x'})
+                        else:
+                            categories.append({'name': '', 'path': ''})
+                if categories and idx < len(categories):
+                    cat = categories[idx]
+                    is_defined = bool(cat.get('name')) and bool(cat.get('path'))
+                else:
+                    is_defined = False
+                if is_defined:
+                    dpg.bind_item_theme(button_id, self._category_button_defined_theme)
+                else:
+                    dpg.bind_item_theme(button_id, self._category_button_theme)
                 if idx in self._feedback_timers:
                     del self._feedback_timers[idx]
         self._feedback_timers[idx] = True
