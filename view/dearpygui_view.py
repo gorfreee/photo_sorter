@@ -449,7 +449,7 @@ class DearPyGuiView(BaseView):
         """Update the status text in the UI."""
         status = text
         if file_size_kb is not None:
-            status += f" ({file_size_kb:.1f} KB)"
+            status += f" [{file_size_kb:.1f} KB]"
         dpg.set_value("status_text", status)
     
     # --- Category Button Creation and Management ---
