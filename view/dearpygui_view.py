@@ -101,61 +101,117 @@ class DearPyGuiView(BaseView):
                 tag=self.TAG_IMAGE_TEXTURE
             )
 
-        # --- Define button themes for modern look and visual feedback ---
-        # Theme for Reset button (e.g., red)
-        with dpg.theme() as self._reset_button_theme:
-            with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [200, 60, 60, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [220, 80, 80, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [180, 40, 40, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 255])
-                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
-                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
-        # Theme for Select Source Folder button (e.g., teal)
+        # --- Define independent button themes for each button type ---
+        # Select Source Folder button theme
         with dpg.theme() as self._select_folder_button_theme:
             with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [40, 180, 180, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [60, 200, 200, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [30, 140, 140, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 255])
-                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
-                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
-        # Theme for navigation buttons (e.g., blue)
-        with dpg.theme() as self._nav_button_theme:
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [55, 58, 64, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 4, 4)
+        # Feedback theme for Select Source Folder button
+        with dpg.theme() as self._select_folder_button_feedback_theme:
             with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [40, 120, 220, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [60, 140, 240, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [30, 100, 180, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 255])
-                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
-                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
-        # Active/feedback theme for navigation buttons (matches ButtonActive)
-        with dpg.theme() as self._nav_button_active_theme:
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [44, 90, 130, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 4, 4)
+        # Reset button theme (independent)
+        with dpg.theme() as self._reset_button_theme:
             with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [30, 100, 180, 255])        # Same as ButtonActive
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [30, 100, 180, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [30, 100, 180, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 255])
-                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
-                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
-        # Theme for category buttons (e.g., green)
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [55, 58, 64, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 4, 4)
+        # Feedback theme for Reset button
+        with dpg.theme() as self._reset_button_feedback_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [44, 90, 130, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 4, 4)
+        # Previous button theme (independent)
+        with dpg.theme() as self._prev_button_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [55, 58, 64, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 4, 4)
+        # Feedback theme for Previous button
+        with dpg.theme() as self._prev_button_feedback_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [44, 90, 130, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 4, 4)
+        # Next button theme (independent)
+        with dpg.theme() as self._next_button_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [55, 58, 64, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 4, 4)
+        # Feedback theme for Next button
+        with dpg.theme() as self._next_button_feedback_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [44, 90, 130, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 4, 4)
+        # Category button theme (independent)
         with dpg.theme() as self._category_button_theme:
             with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [60, 180, 80, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [80, 200, 100, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [40, 140, 60, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 255])
-                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
-                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
-        # Active/feedback theme for category buttons (darker green, matches ButtonActive)
-        with dpg.theme() as self._button_active_theme:
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [55, 58, 64, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 4, 4)
+        # Feedback theme for Category button
+        with dpg.theme() as self._category_button_feedback_theme:
             with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [40, 140, 60, 255])        # Same as ButtonActive
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [40, 140, 60, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [40, 140, 60, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 255])
-                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
-                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [44, 90, 130, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 4, 4)
         self._category_button_ids = dict()
         self._feedback_timers = dict()
         self._nav_button_ids = dict()
@@ -221,13 +277,13 @@ class DearPyGuiView(BaseView):
         """Build the image display area with navigation buttons."""
         with dpg.group(horizontal=True, tag=self.TAG_IMAGE_AREA):
             btn_prev = dpg.add_button(label="<", callback=self._on_prev, tag=self.TAG_PREV_BUTTON, width=40, height=self.IMAGE_DISPLAY_HEIGHT)
-            dpg.bind_item_theme(btn_prev, self._nav_button_theme)
+            dpg.bind_item_theme(btn_prev, self._prev_button_theme)
             self._nav_button_ids['prev'] = btn_prev
             dpg.add_spacer(width=10)
             dpg.add_image(texture_tag=self.TAG_IMAGE_TEXTURE, tag=self.TAG_IMAGE_DISPLAY, width=self.IMAGE_DISPLAY_WIDTH, height=self.IMAGE_DISPLAY_HEIGHT)
             dpg.add_spacer(width=10)
             btn_next = dpg.add_button(label=">", callback=self._on_next, tag=self.TAG_NEXT_BUTTON, width=40, height=self.IMAGE_DISPLAY_HEIGHT)
-            dpg.bind_item_theme(btn_next, self._nav_button_theme)
+            dpg.bind_item_theme(btn_next, self._next_button_theme)
             self._nav_button_ids['next'] = btn_next
 
     def _build_categories_container(self):
@@ -520,7 +576,8 @@ class DearPyGuiView(BaseView):
         button_id = self._category_button_ids[idx]
         if hasattr(self, '_feedback_timers') and idx in self._feedback_timers:
             self._feedback_timers[idx] = None
-        dpg.bind_item_theme(button_id, self._button_active_theme)
+        # Use a temporary feedback theme
+        dpg.bind_item_theme(button_id, self._category_button_feedback_theme)
         def restore_theme():
             if self._feedback_timers.get(idx) is not None:
                 dpg.bind_item_theme(button_id, self._category_button_theme)
@@ -539,11 +596,17 @@ class DearPyGuiView(BaseView):
         nav_key = f'nav_{which}'
         if nav_key in self._feedback_timers:
             self._feedback_timers[nav_key] = None
-        # Use the correct nav button active theme for feedback
-        dpg.bind_item_theme(button_id, self._nav_button_active_theme)
+        # Use the correct independent feedback theme
+        if which == 'prev':
+            dpg.bind_item_theme(button_id, self._prev_button_feedback_theme)
+        elif which == 'next':
+            dpg.bind_item_theme(button_id, self._next_button_feedback_theme)
         def restore_theme():
             if self._feedback_timers.get(nav_key) is not None:
-                dpg.bind_item_theme(button_id, self._nav_button_theme)
+                if which == 'prev':
+                    dpg.bind_item_theme(button_id, self._prev_button_theme)
+                elif which == 'next':
+                    dpg.bind_item_theme(button_id, self._next_button_theme)
                 if nav_key in self._feedback_timers:
                     del self._feedback_timers[nav_key]
         self._feedback_timers[nav_key] = True
