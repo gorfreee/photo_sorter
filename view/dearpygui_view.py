@@ -207,10 +207,10 @@ class DearPyGuiView(BaseView):
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
                 dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 4, 4)
-        # Category button theme for DEFINED categories (darker)
+        # Category button theme for DEFINED categories (lighter)
         with dpg.theme() as self._category_button_defined_theme:
             with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [38, 40, 44, 255])  # darker grey
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [48, 50, 54, 255])  # lighter grey
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
