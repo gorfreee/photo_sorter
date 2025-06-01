@@ -270,7 +270,14 @@ class DearPyGuiView(BaseView):
     def _build_top_controls(self):
         """Build the top controls: select folder button and folder path display."""
         with dpg.group(horizontal=True, tag=self.TAG_TOP_CONTROLS):
-            btn1 = dpg.add_button(label="Select Source Folder", callback=self._on_select_folder, tag="select_folder_button")
+            # Set explicit width and height to prevent visual change on enable/disable
+            btn1 = dpg.add_button(
+                label="Select Source Folder",
+                callback=self._on_select_folder,
+                tag="select_folder_button",
+                width=220,  # Fixed width for visual consistency
+                height=40   # Fixed height for visual consistency
+            )
             dpg.bind_item_theme(btn1, self._select_folder_button_theme)
             dpg.add_spacer(width=10)
             dpg.add_text("No folder selected", tag="selected_folder_path", wrap=400)
@@ -332,9 +339,15 @@ class DearPyGuiView(BaseView):
 
     # --- Event Handlers and Callback Registration ---
     def _on_select_folder(self) -> None:
-        """Internal event handler for folder selection button."""
-        if self._callbacks.get("select_folder"):
-            self._callbacks["select_folder"]()
+        """Internal event handler for folder selection button. Prevents multiple dialogs."""
+        if getattr(self, '_modal_open', False):
+            return  # Prevent folder dialog if a modal is open
+        self.set_select_folder_button_enabled(False)
+        try:
+            if self._callbacks.get("select_folder"):
+                self._callbacks["select_folder"]()
+        finally:
+            self.set_select_folder_button_enabled(True)
 
     def _on_next(self) -> None:
         """Internal event handler for next image button."""
@@ -621,3 +634,8 @@ class DearPyGuiView(BaseView):
     def set_modal_open(self, is_open: bool):
         """Set the modal open state (True if a modal dialog is open)."""
         self._modal_open = is_open
+
+    def set_select_folder_button_enabled(self, enabled: bool) -> None:
+        """Enable or disable the Select Source Folder button."""
+        if dpg.does_item_exist("select_folder_button"):
+            dpg.configure_item("select_folder_button", enabled=enabled)
