@@ -129,6 +129,15 @@ class DearPyGuiView(BaseView):
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
+        # Active/feedback theme for navigation buttons (matches ButtonActive)
+        with dpg.theme() as self._nav_button_active_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [30, 100, 180, 255])        # Same as ButtonActive
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [30, 100, 180, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [30, 100, 180, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 255])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
         # Theme for category buttons (e.g., green)
         with dpg.theme() as self._category_button_theme:
             with dpg.theme_component(dpg.mvButton):
@@ -138,12 +147,12 @@ class DearPyGuiView(BaseView):
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
-        # Active/feedback theme for all buttons (darker shade)
+        # Active/feedback theme for category buttons (darker green, matches ButtonActive)
         with dpg.theme() as self._button_active_theme:
             with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [30, 100, 180, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [30, 100, 180, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [30, 100, 180, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [40, 140, 60, 255])        # Same as ButtonActive
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [40, 140, 60, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [40, 140, 60, 255])
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
@@ -415,14 +424,8 @@ class DearPyGuiView(BaseView):
 
     def _on_category_click(self, idx: int) -> None:
         """Handle left-click on a category button."""
-        import inspect
-        frame = inspect.currentframe()
-        try:
-            caller_frame = frame.f_back if frame else None
-            if caller_frame and 'key_press_handler' in str(getattr(caller_frame.f_code, 'co_name', '')):
-                DearPyGuiView._show_button_feedback(self, idx)
-        finally:
-            del frame
+        # Show visual feedback for both mouse and keyboard triggers using the same theme
+        DearPyGuiView._show_button_feedback(self, idx)
         if idx in self._category_callbacks:
             self._category_callbacks[idx]["click"](idx)
     
@@ -536,7 +539,8 @@ class DearPyGuiView(BaseView):
         nav_key = f'nav_{which}'
         if nav_key in self._feedback_timers:
             self._feedback_timers[nav_key] = None
-        dpg.bind_item_theme(button_id, self._button_active_theme)
+        # Use the correct nav button active theme for feedback
+        dpg.bind_item_theme(button_id, self._nav_button_active_theme)
         def restore_theme():
             if self._feedback_timers.get(nav_key) is not None:
                 dpg.bind_item_theme(button_id, self._nav_button_theme)
