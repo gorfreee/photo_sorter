@@ -140,15 +140,16 @@ def show_how_to():
     """Show a modal dialog with instructions on how to use the application. Centered, fixed size, Close button only."""
     import dearpygui.dearpygui as dpg
     window_id = f"how_to_popup_{uuid.uuid4()}"
-    width, height = 700, 460
+    width, height = 880, 270
     instructions = (
         "How to Use Photo Sorter:\n\n"
-        "1. Click 'Select Source Folder' to choose the folder with your photos.\n"
-        "2. Configure up to 9 categories by clicking the category buttons.\n"
-        "3. For each photo, click a category button or press keys 1-9 to sort.\n"
-        "4. Use < and > or arrow keys to navigate between photos.\n"
-        "5. The photo will be moved to the selected category's folder.\n"
-        "6. Use the Reset button to clear categories and start over."
+        "1. Click 'Select Source Folder' to choose a folder with your photos. Images are shown in alphabetical order.\n"
+        "2. Configure up to 9 categories: Click a category button to set its name and destination folder. Right-click to edit a category.\n"
+        "3. To sort a photo, click a category button or press keys 1-9. The photo is moved (not copied) to the selected category's folder.\n"
+        "4. Navigate photos by clicking the navigation buttons or Left/Right arrow keys.\n"
+        "5. Click 'Reset' to clear categories and the selected source folder.\n\n"
+        "Tips:\n"
+        "- Supported formats: JPG, PNG, GIF, BMP, TIF, WEBP.\n"
     )
     def _close():
         dpg.delete_item(window_id)
