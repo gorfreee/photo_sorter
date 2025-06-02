@@ -6,6 +6,8 @@ from typing import Dict, Callable
 from tkinter import filedialog
 import dearpygui.dearpygui as dpg
 import uuid
+import webbrowser
+import tkinter as tk
 
 
 def _center_window(window_id: str, width: int, height: int) -> None:
@@ -47,31 +49,31 @@ def show_error(message: str) -> None:
     _show_message_dialog("Error", message)
 
 
+def _get_view_instance():
+    """Helper to get DearPyGuiView instance for modal state management"""
+    try:
+        from view.dearpygui_view import DearPyGuiView
+        return DearPyGuiView._instance if hasattr(DearPyGuiView, "_instance") else None
+    except ImportError:
+        return None
+
+def _set_modal_state(view, is_open):
+    """Helper to set modal state if view exists"""
+    if view:
+        view.set_modal_open(is_open)
+
+
 def configure_category(idx: int, initial: Dict[str, str], callback: Callable) -> None:
     """
     Show a modal dialog to configure a category, centered.
     Includes: name input, destination folder input with Browse button (native Windows folder dialog),
     and Save, Cancel, Delete buttons.
     """
-    import dearpygui.dearpygui as dpg
-    import uuid
-    import tkinter as tk
-    from tkinter import filedialog
-
-    # Try to get the DearPyGuiView instance to set modal flag
-    view = None
-    try:
-        from view.dearpygui_view import DearPyGuiView
-        # Find the current view instance if possible (singleton pattern or global)
-        view = DearPyGuiView._instance if hasattr(DearPyGuiView, "_instance") else None
-    except ImportError:
-        pass
-
+    view = _get_view_instance()
     window_id = f"category_config_{idx}_{uuid.uuid4()}"
     name_id = f"cat_name_{window_id}"
     folder_id = f"cat_folder_{window_id}"
     ok_id = f"cat_ok_{window_id}"
-
     width, height = 315, 200
 
     def _on_ok():
@@ -81,20 +83,17 @@ def configure_category(idx: int, initial: Dict[str, str], callback: Callable) ->
             "name": dpg.get_value(name_id),
             "path": dpg.get_value(folder_id)
         })
-        if view:
-            view.set_modal_open(False)
+        _set_modal_state(view, False)
         dpg.delete_item(window_id)
 
     def _on_cancel():
         callback({"action": "cancel", "idx": idx})
-        if view:
-            view.set_modal_open(False)
+        _set_modal_state(view, False)
         dpg.delete_item(window_id)
 
     def _on_delete():
         callback({"action": "delete", "idx": idx})
-        if view:
-            view.set_modal_open(False)
+        _set_modal_state(view, False)
         dpg.delete_item(window_id)
 
     def _on_browse():
@@ -132,13 +131,11 @@ def configure_category(idx: int, initial: Dict[str, str], callback: Callable) ->
     # Set initial OK state
     _update_ok_state()
     # Set modal flag to True when dialog opens
-    if view:
-        view.set_modal_open(True)
+    _set_modal_state(view, True)
 
 
 def show_how_to():
     """Show a modal dialog with instructions on how to use the application. Centered, fixed size, Close button only."""
-    import dearpygui.dearpygui as dpg
     window_id = f"how_to_popup_{uuid.uuid4()}"
     width, height = 880, 270
     instructions = (
@@ -164,20 +161,12 @@ def show_how_to():
 
 def show_about() -> None:
     """Show the About popup window, centered in the viewport."""
-    import webbrowser
-    import dearpygui.dearpygui as dpg
     from view.dearpygui_view import DearPyGuiView
-    # Try to get the DearPyGuiView instance to set modal flag
-    view = None
-    try:
-        view = DearPyGuiView._instance if hasattr(DearPyGuiView, "_instance") else None
-    except ImportError:
-        pass
+    view = _get_view_instance()
     window_id = "about_popup_dialogs"
     width, height = 355, 180
     def close_popup():
-        if view:
-            view.set_modal_open(False)
+        _set_modal_state(view, False)
         dpg.configure_item(window_id, show=False)
     if not dpg.does_item_exist(window_id):
         with dpg.window(
@@ -212,8 +201,7 @@ def show_about() -> None:
                 dpg.add_spacer(width=10)
                 dpg.add_button(label="Close", width=80, callback=close_popup)
     # Center and show
-    if view:
-        view.set_modal_open(True)
+    _set_modal_state(view, True)
     vp_width = dpg.get_viewport_client_width()
     vp_height = dpg.get_viewport_client_height()
     x = max((vp_width - width) // 2, 0)
