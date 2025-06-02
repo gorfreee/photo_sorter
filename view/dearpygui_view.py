@@ -251,7 +251,6 @@ class DearPyGuiView(BaseView):
                     self._build_categories_container()
                 dpg.add_spacer(width=0, tag="right_spacer")
             dpg.add_spacer(height=20)
-        self._build_about_popup()
 
         # --- Responsive centering on viewport resize ---
         def _on_viewport_resize():
@@ -273,10 +272,12 @@ class DearPyGuiView(BaseView):
 
     # --- UI Construction Methods ---
     def _build_menu_bar(self):
-        """Build the menu bar with About menu item."""
+        """Build the menu bar with How to and About menu items."""
+        from view.dialogs import show_how_to, show_about
         with dpg.menu_bar(tag=self.TAG_MENU_BAR):
             with dpg.menu(label="Menu"):
-                dpg.add_menu_item(label="About", callback=self.show_about_popup)
+                dpg.add_menu_item(label="How to", callback=lambda: show_how_to())
+                dpg.add_menu_item(label="About", callback=lambda: show_about())
 
     def _build_top_controls(self):
         """Build the top controls: select folder button and folder path display."""
@@ -313,40 +314,6 @@ class DearPyGuiView(BaseView):
     def _build_categories_container(self):
         """Build the container for category buttons."""
         dpg.add_group(tag=self.TAG_CATEGORIES_CONTAINER)
-
-    def _build_about_popup(self):
-        """Build the About popup window."""
-        with dpg.window(
-            label="About",
-            modal=True,
-            show=False,
-            tag=self.TAG_ABOUT_POPUP,
-            no_close=True,
-            no_collapse=True,
-            no_move=True,
-            width=self.ABOUT_POPUP_WIDTH,
-            height=self.ABOUT_POPUP_HEIGHT,
-            no_resize=True  # Make the About popup non-resizable
-        ):
-            dpg.add_text("Photo Sorter")
-            dpg.add_spacer(height=2)
-            with dpg.group(horizontal=True):
-                dpg.add_text("GitHub:")
-                dpg.add_text(
-                    "https://github.com/gorfreee/photo_sorter",
-                    color=[0, 102, 204],
-                    bullet=False,
-                    tag=self.TAG_GITHUB_LINK,
-                    show=True
-                )
-            dpg.add_spacer(height=2)
-            dpg.add_text("License: MIT License")
-            dpg.add_spacer(height=10)
-            with dpg.group(horizontal=True):
-                dpg.add_spacer(width=60)
-                dpg.add_button(label="Open GitHub", width=120, callback=lambda: webbrowser.open('https://github.com/gorfreee/photo_sorter'))
-                dpg.add_spacer(width=10)
-                dpg.add_button(label="Close", width=80, callback=lambda: dpg.configure_item(self.TAG_ABOUT_POPUP, show=False))
 
     # --- Event Handlers and Callback Registration ---
     def _on_select_folder(self) -> None:
@@ -579,11 +546,6 @@ class DearPyGuiView(BaseView):
         x = max((vp_width - width) // 2, 0)
         y = max((vp_height - height) // 2, 0)
         dpg.set_item_pos(window_id, [x, y])
-
-    def show_about_popup(self, sender=None, app_data=None, user_data=None):
-        """Show the About popup window, centered in the viewport."""
-        self._center_window(self.TAG_ABOUT_POPUP, 400, 160)
-        dpg.configure_item(self.TAG_ABOUT_POPUP, show=True)
 
     # --- UI State Updates ---
     def update_select_folder_button(self, folder_selected: bool) -> None:
