@@ -69,7 +69,7 @@ class DearPyGuiView(BaseView):
         except Exception:
             x_pos, y_pos = 0, 0
 
-        icon_path = Path(__file__).parent.parent / "icon.ico"
+        icon_path = Path(__file__).parent / "icon.ico"
         # Store viewport parameters for later creation
         self._viewport_params = {
             "title": "Photo Sorter",

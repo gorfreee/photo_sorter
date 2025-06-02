@@ -64,3 +64,8 @@ Thumbs.db
 
 # Ignore config files with secrets
 secrets.*
+
+# Ignore PyInstaller stuff
+dist/
+build/
+*.spec
