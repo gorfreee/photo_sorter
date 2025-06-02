@@ -443,8 +443,6 @@ class DearPyGuiView(BaseView):
         DearPyGuiView._show_button_feedback(self, idx)
         self._on_category_click(idx)
 
-    # --- Viewport and Window Utilities ---
-    # Removed unused: _on_viewport_resize (duplicate), _center_window
     # --- UI State Updates ---
     def update_select_folder_button(self, folder_selected: bool) -> None:
         """Update the select folder button label based on selection state."""
