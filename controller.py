@@ -75,7 +75,7 @@ class PhotoSorterController:
     def show_current(self):
         if not self.images:
             self.view.show_image(None)
-            self.view.update_status("No images found.")
+            self.view.update_status("No images found")
             return
         img_path = self.images[self.current_index]
         # Use cached thumbnail if available, else load and cache it

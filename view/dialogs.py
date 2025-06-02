@@ -146,7 +146,7 @@ def show_how_to():
         "1. Click 'Select Source Folder' to choose a folder with your photos. Images are shown in alphabetical order.\n"
         "2. Configure up to 9 categories: Click a category button to set its name and destination folder. Right-click to edit a category.\n"
         "3. To sort a photo, click a category button or press keys 1-9. The photo is moved (not copied) to the selected category's folder.\n"
-        "4. Navigate photos by clicking the navigation buttons or Left/Right arrow keys.\n"
+        "4. Navigate photos by clicking the navigation buttons or through Left/Right arrow keys.\n"
         "5. Click 'Reset' to clear categories and the selected source folder.\n\n"
         "Tips:\n"
         "- Supported formats: JPG, PNG, GIF, BMP, TIF, WEBP.\n"
