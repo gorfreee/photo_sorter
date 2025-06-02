@@ -134,8 +134,8 @@ class DearPyGuiView(BaseView):
         with dpg.theme() as self._reset_button_theme:
             with dpg.theme_component(dpg.mvButton):
                 dpg.add_theme_color(dpg.mvThemeCol_Button, [55, 58, 64, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [180, 60, 60, 255])  # Red hover
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [130, 40, 40, 255])   # Red active
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
@@ -144,9 +144,9 @@ class DearPyGuiView(BaseView):
         # Feedback theme for Reset button
         with dpg.theme() as self._reset_button_feedback_theme:
             with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [33, 70, 110, 255])        # Use active color for feedback
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [33, 70, 110, 255]) # Use active color for feedback
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])  # Use active color for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [130, 40, 40, 255])        # Use active red for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [130, 40, 40, 255]) # Use active red for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [130, 40, 40, 255])  # Use active red for feedback
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
@@ -156,8 +156,8 @@ class DearPyGuiView(BaseView):
         with dpg.theme() as self._prev_button_theme:
             with dpg.theme_component(dpg.mvButton):
                 dpg.add_theme_color(dpg.mvThemeCol_Button, [55, 58, 64, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [90, 90, 90, 255])   # Gray hover
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [70, 70, 70, 255])    # Gray active
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
@@ -166,9 +166,9 @@ class DearPyGuiView(BaseView):
         # Feedback theme for Previous button
         with dpg.theme() as self._prev_button_feedback_theme:
             with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [33, 70, 110, 255])        # Use active color for feedback
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [33, 70, 110, 255]) # Use active color for feedback
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])  # Use active color for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [70, 70, 70, 255])         # Use active gray for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [70, 70, 70, 255])  # Use active gray for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [70, 70, 70, 255])   # Use active gray for feedback
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
@@ -178,8 +178,8 @@ class DearPyGuiView(BaseView):
         with dpg.theme() as self._next_button_theme:
             with dpg.theme_component(dpg.mvButton):
                 dpg.add_theme_color(dpg.mvThemeCol_Button, [55, 58, 64, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [44, 90, 130, 255])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [90, 90, 90, 255])   # Gray hover
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [70, 70, 70, 255])    # Gray active
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
@@ -188,9 +188,9 @@ class DearPyGuiView(BaseView):
         # Feedback theme for Next button
         with dpg.theme() as self._next_button_feedback_theme:
             with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [33, 70, 110, 255])        # Use active color for feedback
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [33, 70, 110, 255]) # Use active color for feedback
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [33, 70, 110, 255])  # Use active color for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [70, 70, 70, 255])         # Use active gray for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [70, 70, 70, 255])  # Use active gray for feedback
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [70, 70, 70, 255])   # Use active gray for feedback
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [220, 220, 220, 255])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 8)
